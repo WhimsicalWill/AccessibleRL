@@ -2,7 +2,7 @@ import numpy  as np
 import torch
 import gym
 from networks import ActorCritic
-from agent_class import Agent
+from agent_class import AgentProcess
 from memory import Memory
 from utils import plot_learning_curve
     
@@ -31,10 +31,10 @@ def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_id
             t_steps += 1
             obs = obs_
             if ep_steps % T_MAX == 0 or done: # update networks if needed
-                local_agent.learn(obs_) # pass in the newest obs for V estimation  
+                local_agent.learn(obs_, done) # pass in the newest obs for V estimation  
         if name == '1':
             scores.append(score)
-            avg_score = np.mean(scores[:-100])
+            avg_score = np.mean(scores[-100:])
             print(f"Agent {name}: Episode {ep}, {score} score, {ep_steps} steps, avg score: {avg_score}")
 
     if name == '1': # plot learning curve for agent on first thread

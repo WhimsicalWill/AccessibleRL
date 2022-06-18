@@ -1,4 +1,6 @@
 import numpy as np
+import torch
+import torch.nn.functional as F
 from memory import Memory
 from networks import ActorCritic
 from torch.distributions import Categorical
@@ -9,7 +11,7 @@ class AgentProcess():
         self.gamma = gamma
         self.tau = tau
 
-        self.global_ac = global_ac # the global (central) controller
+        self.global_ac = global_ac # the shared global controller
         self.optimizer = optimizer
 
         self.memory = Memory()
@@ -27,9 +29,9 @@ class AgentProcess():
         log_prob = dist.log_prob(action)
 
         # no need for .cpu() before .numpy() as we are on cpu already
-        return action.numpy()[0], v, log_prob
+        return action.numpy()[0], value, log_prob
 
-    def learn(self):
+    def learn(self, obs, done):
         # calculate rewards to go
         # then calculate GAE
         # then calculate losses
@@ -38,11 +40,11 @@ class AgentProcess():
         # load environment transitions that are used for gradient update
         rewards, values, log_probs = self.memory.sample_memory()
 
-        optimizer.zero_grad()
+        self.optimizer.zero_grad()
         loss = self.calc_loss(obs, done, rewards, values, log_probs)
         loss.backward() # compute gradient of loss w.r.t. local agent's parameters
         torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 40) # in-place gradient norm clip
-        self.copy_gradients_and_step()
+        self.copy_gradients_and_step() # take gradient step for global controller, and update local params
         self.memory.reset() # clear the memory after a gradient update
 
     def calc_R(self, done, rewards, values):
@@ -69,7 +71,7 @@ class AgentProcess():
         returns = self.calc_R(done, rewards, values)
 
         # if this transition is terminal, value is zero
-        next_v = torch.zeros(1, 1) if done else self.forward(torch.tensor([new_state], dtype=torch.float))[1]
+        next_v = torch.zeros(1, 1) if done else self.actor_critic(torch.tensor([new_state], dtype=torch.float))[1]
         values.append(next_v.detach()) # detach from computation graph since it was just computed
         values = torch.cat(values).squeeze()
         log_probs = torch.cat(log_probs)
