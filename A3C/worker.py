@@ -34,7 +34,7 @@ def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_id
             t_steps += 1
             obs = obs_
             if ep_steps % T_MAX == 0 or done: # update networks if needed
-                local_agent.update() 
+                local_agent.learn(obs_) # pass in the newest obs for V estimation  
         if name == '1':
             scores.append(score)
             avg_score = np.mean(scores[:-100])
