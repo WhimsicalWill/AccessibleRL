@@ -23,5 +23,3 @@ class ActorCritic(nn.Module):
         probs = torch.softmax(pi, dim=1)
 
         return probs, v
-
-
