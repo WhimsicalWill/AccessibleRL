@@ -1,20 +1,15 @@
-# each thread can have a different agent class
-# complete with:
-# choose_action, store_transition, and learn functions
-# also, each agent object has different networks
-
 import numpy as np
 from memory import Memory
+from networks import ActorCritic
+from torch.distributions import Categorical
 
 class AgentProcess():
     def __init__(self, input_shape, n_actions, global_ac, 
                 optimizer, gamma=0.99, tau=1.0):
-        self.input_shape = input_shape
-        self.n_actions = n_actions
         self.gamma = gamma
         self.tau = tau
 
-        self.global_agent = global_ac # the global (central) controller
+        self.global_ac = global_ac # the global (central) controller
         self.optimizer = optimizer
 
         self.memory = Memory()
@@ -46,8 +41,8 @@ class AgentProcess():
         optimizer.zero_grad()
         loss = self.calc_loss(obs, done, rewards, values, log_probs)
         loss.backward() # compute gradient of loss w.r.t. local agent's parameters
-        torch.nn.utils.clip_grad_norm_(local_agent.parameters(), 40) # in-place gradient norm clip
-        copy_gradients_and_step(local_agent, global_ac, optimizer)
+        torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 40) # in-place gradient norm clip
+        self.copy_gradients_and_step()
         self.memory.reset() # clear the memory after a gradient update
 
     def calc_R(self, done, rewards, values):
@@ -105,8 +100,8 @@ class AgentProcess():
         total_loss = actor_loss + critic_loss + 0.01 * entropy_loss
         return total_loss
 
-    def copy_gradients_and_step(self, local_agent, global_ac, optimizer):
-        for local_param, global_param in zip(actor_critic.parameters(), global_ac.parameters()):
+    def copy_gradients_and_step(self):
+        for local_param, global_param in zip(self.actor_critic.parameters(), self.global_ac.parameters()):
             global_param.grad = local_param.grad
-        optimizer.step()
-        actor_critic.load_state_dict(global_ac.state_dict())
+        self.optimizer.step() # update the central actor_critic with the gradients of the local model
+        self.actor_critic.load_state_dict(self.global_ac.state_dict()) # load new global weights into local model

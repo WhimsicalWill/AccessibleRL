@@ -13,10 +13,7 @@ from utils import plot_learning_curve
 
 def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_idx):
     env = gym.make(env_id)
-    # create a local agent
-    # which should have memory and networks
-    local_agent = Agent(input_shape, n_actions, global_ac, optimizer)
-    # local_agent = ActorCritic(input_shape, n_actions)
+    local_agent = AgentProcess(input_shape, n_actions, global_ac, optimizer)
     
     T_MAX = 20 # update interval
     t_steps = 0

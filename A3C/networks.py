@@ -1,8 +1,6 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.distributions import Categorical
 
 class ActorCritic(nn.Module):
     def __init__(self, input_dims, n_actions, hidden_dim=256):
@@ -21,7 +19,7 @@ class ActorCritic(nn.Module):
         pi = self.pi(x)
         v = self.v(x)
 
-        # handle choosing action from pi
+        # apply softmax to constrain probabilities to sum to 1
         probs = torch.softmax(pi, dim=1)
 
         return probs, v
