@@ -23,6 +23,7 @@ class AgentProcess():
     def choose_action(self, obs):
         state = torch.tensor([obs], dtype=torch.float) # batchify
         probs, value = self.actor_critic(state)
+        # print(probs)
 
         dist = Categorical(probs)
         action = dist.sample()
@@ -32,11 +33,6 @@ class AgentProcess():
         return action.numpy()[0], value, log_prob
 
     def learn(self, obs, done):
-        # calculate rewards to go
-        # then calculate GAE
-        # then calculate losses
-        # use backward(), then do optimizer step
-
         # load environment transitions that are used for gradient update
         rewards, values, log_probs = self.memory.sample_memory()
 
@@ -62,25 +58,18 @@ class AgentProcess():
         n_steps = len(delta_t)
         batch_gae = np.zeros(n_steps) # initialize zero vector
 
-        # calculate GAE using exponentially weighted deltas (O(n^2) time implementation)
-        # for t in range(n_steps):
-        #     for k in range(0, n_steps - t):
-        #         temp = (self.gamma*self.tau)**k * delta_t[t+k]
-        #         gae[t] += temp
-
-        # O(n) time complexity implementation TODO: no need for gae variable
-        gae = 0
-        for t in reversed(list(range(n_steps))):
-            gae = delta_t[t] + (self.gamma*self.tau) * gae # TODO: why do we use gamma twice effectively?
-            batch_gae[t] = gae
+        # O(n) time complexity implementation
+        batch_gae[-1] = delta_t[-1]
+        for t in reversed(range(n_steps - 1)):
+            batch_gae[t] = delta_t[t] + (self.gamma*self.tau) * batch_gae[t+1] # TODO: why do we use gamma twice effectively?
         batch_gae = torch.tensor(batch_gae, dtype=torch.float)
 
-        # sum works better (gradient gets scaled by batch_size)
+        # sum works better empirically (gradient gets scaled by batch_size)
         actor_loss = -torch.sum(log_probs * batch_gae) # TODO: change to torch tensor sum operation (or isn't this just a dot product?)
         critic_loss = F.mse_loss(values[:-1].squeeze(), returns)
         entropy_loss = torch.sum(log_probs * torch.exp(log_probs)) # minimize negative entropy (maximizes entropy)
 
-        total_loss = actor_loss + critic_loss + 0.01 * entropy_loss
+        total_loss = actor_loss + critic_loss + 0.04 * entropy_loss
         return total_loss
 
     def calc_R(self, done, rewards, values):
