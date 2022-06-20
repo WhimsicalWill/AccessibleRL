@@ -3,8 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class ActorCritic(nn.Module):
-    def __init__(self, input_dims, n_actions, hidden_dim=256):
+    def __init__(self, input_dims, n_actions, hidden_dim=256, chkpt_dir="tmp/a3c"):
         super(ActorCritic, self).__init__()
+        self.chkpt_dir = chkpt_dir
+        self.chkpt_file = f"{chkpt_dir}/cartpole_a3c"
 
         self.fc1 = nn.Linear(input_dims, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
@@ -23,3 +25,9 @@ class ActorCritic(nn.Module):
         probs = torch.softmax(pi, dim=1)
 
         return probs, v
+
+     def save_checkpoint(self):
+        torch.save(self.state_dict(), self.chkpt_file)
+    
+    def load_checkpoint(self):
+        self.load_state_dict(torch.load(self.chkpt_file))

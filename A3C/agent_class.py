@@ -7,9 +7,10 @@ from torch.distributions import Categorical
 
 class AgentProcess():
     def __init__(self, input_shape, n_actions, global_ac, 
-                optimizer, gamma=0.99, tau=1.0):
+                optimizer, gamma=0.99, tau=1.0, eps=0.01):
         self.gamma = gamma
         self.tau = tau
+        self.eps = eps
 
         self.global_ac = global_ac # the shared global controller
         self.optimizer = optimizer
@@ -20,10 +21,10 @@ class AgentProcess():
     def store_transition(self, reward, value, log_prob):
         self.memory.store_transition(reward, value, log_prob)
     
+    # choose action according to policy, without any eps-greedy exploration
     def choose_action(self, obs):
         state = torch.tensor([obs], dtype=torch.float) # batchify
         probs, value = self.actor_critic(state)
-        # print(probs)
 
         dist = Categorical(probs)
         action = dist.sample()
@@ -65,7 +66,7 @@ class AgentProcess():
         batch_gae = torch.tensor(batch_gae, dtype=torch.float)
 
         # sum works better empirically (gradient gets scaled by batch_size)
-        actor_loss = -torch.sum(log_probs * batch_gae) # TODO: change to torch tensor sum operation (or isn't this just a dot product?)
+        actor_loss = -torch.sum(log_probs * batch_gae)
         critic_loss = F.mse_loss(values[:-1].squeeze(), returns)
         entropy_loss = torch.sum(log_probs * torch.exp(log_probs)) # minimize negative entropy (maximizes entropy)
 
@@ -96,3 +97,11 @@ class AgentProcess():
             global_param.grad = local_param.grad
         self.optimizer.step() # update the central actor_critic with the gradients of the local model
         self.actor_critic.load_state_dict(self.global_ac.state_dict()) # load new global weights into local model
+
+    def load_models(self):
+        print('... loading models ...')
+        self.actor_critic.load_checkpoint()
+
+    def save_models(self):
+        print('... saving models ...')
+        self.actor_critic.save_checkpoint()
