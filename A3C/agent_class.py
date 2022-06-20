@@ -6,14 +6,15 @@ from networks import ActorCritic
 from torch.distributions import Categorical
 
 class AgentProcess():
-    def __init__(self, input_shape, n_actions, global_ac, 
-                optimizer, gamma=0.99, tau=1.0, eps=0.01):
+    def __init__(self, input_shape, n_actions, global_ac=None, 
+                optimizer=None, gamma=0.99, tau=1.0, eps=0.01):
         self.gamma = gamma
         self.tau = tau
         self.eps = eps
 
-        self.global_ac = global_ac # the shared global controller
-        self.optimizer = optimizer
+        if optimizer is not None:
+            self.global_ac = global_ac # the shared global controller
+            self.optimizer = optimizer
 
         self.memory = Memory()
         self.actor_critic = ActorCritic(input_shape, n_actions)

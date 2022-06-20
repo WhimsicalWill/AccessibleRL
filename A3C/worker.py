@@ -36,7 +36,7 @@ def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_id
             scores.append(score)
             avg_score = np.mean(scores[-100:])
             print(f"Agent {name}: Episode {ep}, {score} score, {ep_steps} steps, avg score: {avg_score}")
-
+    global_ac.save_checkpoint() # save the weights of the global actor_critic after training
     if name == '1': # plot learning curve for agent on first thread
         step_list = [x for x in range(num_episodes)]
         plot_learning_curve(step_list, scores, 'A3C_pong_final.png')
