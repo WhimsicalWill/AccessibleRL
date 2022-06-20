@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from memory import Memory
 from networks import ActorCritic
@@ -7,20 +8,21 @@ from torch.distributions import Categorical
 
 class AgentProcess():
     def __init__(self, input_shape, n_actions, global_ac=None, 
-                optimizer=None, gamma=0.99, tau=1.0, eps=0.01):
+                ac_optimizer=None, global_icm=None, icm_optimizer=None, gamma=0.99, tau=1.0):
         self.gamma = gamma
         self.tau = tau
-        self.eps = eps
-
-        if optimizer is not None:
-            self.global_ac = global_ac # the shared global controller
-            self.optimizer = optimizer
-
-        self.memory = Memory()
         self.actor_critic = ActorCritic(input_shape, n_actions)
 
-    def store_transition(self, reward, value, log_prob):
-        self.memory.store_transition(reward, value, log_prob)
+        if ac_optimizer is not None:
+            self.global_ac = global_ac # the shared global controller
+            self.ac_optimizer = ac_optimizer
+            self.global_icm = global_icm
+            self.icm_optimizer = icm_optimizer
+            self.icm = ICM(input_shape, n_actions) # not needed for evaluating a static policy
+            self.memory = Memory()
+
+    def store_transition(self, reward, value, log_prob, state, new_state, action):
+        self.memory.store_transition(reward, value, log_prob, state, new_state, action)
     
     # choose action according to policy, without any eps-greedy exploration
     def choose_action(self, obs):
@@ -36,17 +38,25 @@ class AgentProcess():
 
     def learn(self, obs, done):
         # load environment transitions that are used for gradient update
-        rewards, values, log_probs = self.memory.sample_memory()
+        rewards, values, log_probs, states, new_states, actions = self.memory.sample_memory()
 
-        self.optimizer.zero_grad()
-        loss = self.calc_loss(obs, done, rewards, values, log_probs)
+        # TODO: add loss functions for ICM
+        self.icm_optimizer.zero_grad()
+        intrinsic_rewards, icm_loss = self.calc_icm_loss(states, new_states, actions)
+        icm_loss.backward()
+        self.copy_gradients_and_step(self.icm, self.global_icm, self.icm_optimizer)
+
+        self.ac_optimizer.zero_grad()
+        loss = self.calc_ac_loss(obs, done, rewards, intrinsic_rewards, values, log_probs)
         loss.backward() # compute gradient of loss w.r.t. local agent's parameters
         torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), 40) # in-place gradient norm clip
-        self.copy_gradients_and_step() # take gradient step for global controller, and update local params
+        self.copy_gradients_and_step(self.actor_critic, self.global_ac, self.ac_optimizer) # take gradient step for global controller, and update local params
+
         self.memory.reset() # clear the memory after a gradient update
 
     # calculate the loss according to the A3C algorithm
-    def calc_loss(self, new_state, done, rewards, values, log_probs):
+    def calc_ac_loss(self, new_state, done, rewards, intrinsic_rewards, values, log_probs):
+        rewards += intrinsic_rewards.detach().numpy() # agent's reward is sum of extrinsic and intrinsic rewards
         returns = self.calc_R(done, rewards, values)
 
         # if this transition is terminal, value is zero
@@ -93,11 +103,24 @@ class AgentProcess():
 
         return batch_return
 
-    def copy_gradients_and_step(self):
-        for local_param, global_param in zip(self.actor_critic.parameters(), self.global_ac.parameters()):
+    def calc_icm_loss(self, states, new_states, actions):
+        states = self.tensor(states, dtype=torch.float)
+        actions = self.tensor(actions, dtype=torch.float)
+        new_states = self.tensor(new_states, dtype=torch.float)
+
+        phi_new, pi_logits, phi_hat_new = self.forward(states, new_states, actions)
+
+        # TODO: ensure that both inputs to CrossEntropy are logits
+        inverse_loss = (1 - self.beta) * nn.CrossEntropyLoss(pi_logits, actions)
+        forward_loss = beta * nn.MSELoss(phi_hat_new, phi_new)
+        intrinsic_rewards = self.alpha*0.5*torch.mean((phi_hat_new - phi_new) ** 2, dim=1)
+        return intrinsic_rewards, inverse_loss + forward_loss
+
+    def copy_gradients_and_step(self, local_model, global_model, global_optimizer):
+        for local_param, global_param in zip(local_model.parameters(), global_model.parameters()):
             global_param.grad = local_param.grad
-        self.optimizer.step() # update the central actor_critic with the gradients of the local model
-        self.actor_critic.load_state_dict(self.global_ac.state_dict()) # load new global weights into local model
+        global_optimizer.step() # update the central actor_critic with the gradients of the local model
+        local_model.load_state_dict(global_model.state_dict())
 
     def load_models(self):
         print('... loading models ...')
