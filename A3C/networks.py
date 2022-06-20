@@ -26,7 +26,7 @@ class ActorCritic(nn.Module):
 
         return probs, v
 
-     def save_checkpoint(self):
+    def save_checkpoint(self):
         torch.save(self.state_dict(), self.chkpt_file)
     
     def load_checkpoint(self):
