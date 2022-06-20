@@ -13,7 +13,7 @@ class ParallelEnv:
         global_optim = SharedAdam(global_actor_critic.parameters(), lr=1e-4)
 
         self.threads = [mp.Process(target=worker, args=(name, input_shape, n_actions,
-                        global_actor_critic, global_optim, env_id, num_threads, global_idx)) for name in self.names]
+                        global_actor_critic, global_optim, env_id, global_idx)) for name in self.names]
         
         for thread in self.threads: # start all threads
             thread.start()
