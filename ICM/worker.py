@@ -3,18 +3,20 @@ import torch
 import gym
 from networks import ActorCritic
 from agent_class import AgentProcess
+from ICM import ICM
 from memory import Memory
 from utils import plot_learning_curve
     
 
 # we differentiate between an actor_critic and an agent
 # with the following paradigm: an AgentProcess has
-# an actor_critic (NNs for function approx)
+# an actor_critic (NNs for function approx) and an intrinsic curiosity module (ICM)
 
-def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_idx):
+def worker(name, input_shape, n_actions, global_ac, 
+           optimizer, global_icm, icm_optimizer, env_id, global_idx):
     env = gym.make(env_id)
-    local_agent = AgentProcess(input_shape, n_actions, global_ac, optimizer)
-    
+    local_agent = AgentProcess(input_shape, n_actions, global_ac, optimizer, global_icm, icm_optimizer)
+
     T_MAX = 20 # update interval
     t_steps = 0
     num_episodes = 1000
@@ -32,6 +34,7 @@ def worker(name, input_shape, n_actions, global_ac, optimizer, env_id, global_id
             obs = obs_
             if ep_steps % T_MAX == 0 or done: # update networks if needed
                 local_agent.learn(obs_, done) # pass in the newest obs for V estimation  
+        
         if name == '1':
             scores.append(score)
             avg_score = np.mean(scores[-100:])
