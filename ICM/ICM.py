@@ -45,4 +45,3 @@ class ICM(nn.Module):
         phi_hat_new = self.phi_hat_new(forward_model)
 
         return phi_new, pi_logits, phi_hat_new
-        
