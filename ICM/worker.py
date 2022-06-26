@@ -19,11 +19,13 @@ def worker(name, input_shape, n_actions, global_ac,
 
     T_MAX = 20 # update interval
     t_steps = 0
-    num_episodes = 1000
+    episode_num = 0
+    max_steps = 1e5 # specify max_steps instead of max_episodes for more granular control
     scores = []
-    for ep in range(num_episodes):
+    while t_steps < max_steps:
         obs = env.reset()
         score, done, ep_steps = 0, False, 0 # reset episode variables
+        episode_num += 1
         while not done:
             action, value, log_prob = local_agent.choose_action(obs)
             obs_, reward, done, _ = env.step(action)
@@ -38,8 +40,8 @@ def worker(name, input_shape, n_actions, global_ac,
         if name == '1':
             scores.append(score)
             avg_score = np.mean(scores[-100:])
-            print(f"Agent {name}: Episode {ep}, {score} score, {ep_steps} steps, avg score: {avg_score}")
+            print(f"Agent {name}: Episode {episode_num}, {score} score, {ep_steps} steps, {t_steps} cum_steps, avg score: {avg_score}")
     global_ac.save_checkpoint() # save the weights of the global actor_critic after training
     if name == '1': # plot learning curve for agent on first thread
-        step_list = [x for x in range(num_episodes)]
-        plot_learning_curve(step_list, scores, 'A3C_pong_final.png')
+        step_list = [x for x in range(episode_num)]
+        plot_learning_curve(step_list, scores, 'A3C_cartpole_final.png')
