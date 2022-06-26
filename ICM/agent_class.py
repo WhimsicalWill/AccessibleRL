@@ -2,9 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from memory import Memory
 from networks import ActorCritic
-from torch.distributions import Categorical
+from ICM import ICM
 
 class AgentProcess():
     def __init__(self, input_shape, n_actions, global_ac=None, 
@@ -111,6 +112,7 @@ class AgentProcess():
         phi_new, pi_logits, phi_hat_new = self.forward(states, new_states, actions)
 
         # TODO: ensure that both inputs to CrossEntropy are logits
+        # softmax(pi_logits) = [.4, .6] | actions = [1]
         inverse_loss = (1 - self.beta) * nn.CrossEntropyLoss(pi_logits, actions)
         forward_loss = beta * nn.MSELoss(phi_hat_new, phi_new)
         intrinsic_rewards = self.alpha*0.5*torch.mean((phi_hat_new - phi_new) ** 2, dim=1)

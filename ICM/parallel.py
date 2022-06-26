@@ -2,6 +2,7 @@ import torch.multiprocessing as mp
 from networks import ActorCritic
 from shared_adam import SharedAdam
 from worker import worker
+from ICM import ICM
 
 
 class ParallelEnv:
