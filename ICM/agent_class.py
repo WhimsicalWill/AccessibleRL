@@ -9,9 +9,12 @@ from ICM import ICM
 
 class AgentProcess():
     def __init__(self, input_shape, n_actions, global_ac=None, 
-                ac_optimizer=None, global_icm=None, icm_optimizer=None, gamma=0.99, tau=1.0):
+                ac_optimizer=None, global_icm=None, icm_optimizer=None,
+                gamma=0.99, tau=1.0, beta=0.2, alpha=0.1):
         self.gamma = gamma
         self.tau = tau
+        self.alpha = alpha
+        self.beta = beta
         self.actor_critic = ActorCritic(input_shape, n_actions)
 
         if ac_optimizer is not None:
@@ -110,11 +113,13 @@ class AgentProcess():
         new_states = torch.tensor(new_states, dtype=torch.float)
 
         phi_new, pi_logits, phi_hat_new = self.icm(states, new_states, actions)
+        actions = actions.long() # convert FloatTensor to LongTensor for CrossEntropy loss
 
-        # TODO: ensure that both inputs to CrossEntropy are logits
-        # softmax(pi_logits) = [.4, .6] | actions = [1]
-        inverse_loss = (1 - self.beta) * nn.CrossEntropyLoss(pi_logits, actions)
-        forward_loss = beta * nn.MSELoss(phi_hat_new, phi_new)
+        cross_entropy_loss = nn.CrossEntropyLoss()
+        mse_loss = nn.MSELoss()
+
+        inverse_loss = (1 - self.beta) * cross_entropy_loss(pi_logits, actions)
+        forward_loss = self.beta * mse_loss(phi_hat_new, phi_new)
         intrinsic_rewards = self.alpha*0.5*torch.mean((phi_hat_new - phi_new) ** 2, dim=1)
         return intrinsic_rewards, inverse_loss + forward_loss
 
