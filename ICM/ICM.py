@@ -3,12 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F 
 
 class ICM(nn.Module):
-    def __init__(self, input_shape, n_actions, fc_size=256, alpha=0.1, beta=0.2, latent_dim=256):
+    def __init__(self, input_shape, n_actions, fc_size=256, latent_dim=256):
         super(ICM, self).__init__()
         self.input_shape = input_shape
         self.n_actions = n_actions
-        self.alpha = alpha
-        self.beta = beta
 
         # <--- CODE FOR IMAGE-BASED FEATURE ENCODER --->
         # self.conv1 = nn.Conv2D(input_shape[0], 32, 3, 3, stride=2, padding=1)
@@ -43,7 +41,6 @@ class ICM(nn.Module):
         inverse = F.relu(self.inverse_model(torch.cat([phi, phi_new], dim=1)))
         pi_logits = self.pi_logits(inverse)
 
-        print(f"SHAPE: {actions.shape, states.shape}")
         actions = actions.reshape(actions.shape[0], -1) # (B) -> (B, 1)
         forward_model = self.forward_model(torch.cat([phi, actions], dim=1))
         phi_hat_new = self.phi_hat_new(forward_model)
