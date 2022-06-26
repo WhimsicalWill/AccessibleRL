@@ -27,7 +27,7 @@ def worker(name, input_shape, n_actions, global_ac,
         while not done:
             action, value, log_prob = local_agent.choose_action(obs)
             obs_, reward, done, _ = env.step(action)
-            local_agent.store_transition(reward, value, log_prob)
+            local_agent.store_transition(reward, value, log_prob, obs, obs_, action)
             score += reward
             ep_steps += 1
             t_steps += 1
