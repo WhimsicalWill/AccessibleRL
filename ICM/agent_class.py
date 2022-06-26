@@ -105,11 +105,11 @@ class AgentProcess():
         return batch_return
 
     def calc_icm_loss(self, states, new_states, actions):
-        states = self.tensor(states, dtype=torch.float)
-        actions = self.tensor(actions, dtype=torch.float)
-        new_states = self.tensor(new_states, dtype=torch.float)
+        states = torch.tensor(states, dtype=torch.float)
+        actions = torch.tensor(actions, dtype=torch.float)
+        new_states = torch.tensor(new_states, dtype=torch.float)
 
-        phi_new, pi_logits, phi_hat_new = self.forward(states, new_states, actions)
+        phi_new, pi_logits, phi_hat_new = self.icm(states, new_states, actions)
 
         # TODO: ensure that both inputs to CrossEntropy are logits
         # softmax(pi_logits) = [.4, .6] | actions = [1]
