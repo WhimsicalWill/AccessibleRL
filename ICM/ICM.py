@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import numpy as np
+import torch.nn.functional as F 
 
 class ICM(nn.Module):
     def __init__(self, input_shape, n_actions, fc_size=256, alpha=0.1, beta=0.2, latent_dim=256):
@@ -40,11 +40,12 @@ class ICM(nn.Module):
         phi_new = F.relu(self.phi(new_states))
 
         # Note: if we are working with a CNN encoder, we must broadcast feature rep to appropriate dimensions
-        inverse = F.relu(self.inverse_model(phi, phi_new))
+        inverse = F.relu(self.inverse_model(torch.cat([phi, phi_new], dim=1)))
         pi_logits = self.pi_logits(inverse)
 
-        action = action.reshape(action.size[0], -1) # (B) -> (B, 1)
-        forward_model = self.forward_model(torch.cat([states, actions], dim=1))
+        print(f"SHAPE: {actions.shape, states.shape}")
+        actions = actions.reshape(actions.shape[0], -1) # (B) -> (B, 1)
+        forward_model = self.forward_model(torch.cat([phi, actions], dim=1))
         phi_hat_new = self.phi_hat_new(forward_model)
 
         return phi_new, pi_logits, phi_hat_new
