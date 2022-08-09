@@ -2,9 +2,11 @@
 
 # Conceptual Overview
 
-Asynchronous Advantage Actor Critic (A3C) is an on-policy method that overcomes many of the shortcomings of on-policy methods by collecting data from many processes in parallel. This implementation operates on environments with discrete action spaces, so it can be effectively thought of as a distributed version of Deep Q-Network (DQN).
+Asynchronous Advantage Actor Critic (A3C) is an on-policy method that overcomes many of the shortcomings of on-policy methods by collecting data from many processes asynchronously. A large problem for RL is that data is highly correlated, so collecting unique experiences from many parallel environments helps mitigate this concern.
 
-It maintains a centralized policy and has a set amount of agents collecting data with their own local policy. After a given amount of time steps, the gradients of the local policy are calculated and sent back to the centralized policy to update it. Then, the local policy grabs a copy of the new centralized policy, effectively syncing with the  updates of the other local policies.
+This implementation operates on environments with discrete action spaces, so it can be effectively thought of as a distributed version of Deep Q-Network (DQN).
+
+A3C maintains a centralized policy and has a set amount of agents collecting data with their own local policy. After a given amount of time steps, the gradients of the local policy are calculated and sent back to the centralized policy to update it. Then, the local policy grabs a copy of the new centralized policy, effectively syncing with the  updates of the other local policies.
 
 Instead of collecting transitions, the agent stores `rewards`, `values` and `log_probs` in a replay buffer. 
 
@@ -19,26 +21,24 @@ This implementation uses the same hidden layer to learn representations for both
 
 # Learning Update
 
+During an episode taken by a local policy, we will call the learn() function every T timesteps or when the episode is terminated. We will use all of this sampled experience to change our model parameters, and then reset our local agent's replay buffer after the update.
 
-Generalized Advantage Estimate
+First, we calculate the rewards-to-go by iterating backwards from the end of the episode, summing the rewards and discounting by our discount factor, gamma, as we go.
 
-Replay buffer is cleared after update.
+Then, we use Generalized Advantage Estimation to calculate the advantage of any particular state. This advantage is the `value of action a in state s` - `average value in state s`. Or, formally, `Q(s,a)` - `V(s)`.
 
+Then, we maximize `actor loss`, which is the sum of the `advantages` multiplied by the `log_probs`. Remember that these `log_probs` are the logarithms of the probability that we took the action under the given policy.
 
-Transitions in the form of (s, a, r, s') are added to the agent
+For an action with a positive advantage (better than average), we would like to increase the probability of this action. For an action with a negative advantage (worse than average), we would like to decrease the probability of the action taken. This is the intuition behind the `actor_loss`.
 
-A batch of (s, a, r, s') transitions are sampled from the replay buffer uniformly.
+Additionally, the `critic loss` is calculated as the Mean Squared Error (MSE) between the critic's estimates of the Q-values and the actual rewards-to-go. We would like our critic to be accurate, so we minimize this quantity.
 
-One-step TD targets are computed for each transition. The TD targets are computed as the reward added to the discounted `target_critic` value of the next state action pair. One caveat is that this discounted target critic value is now taken from the minimum of the two critics to curb overestimation bias. Since we do not have access to `a'` in our (s, a, r, s') transition, we use the `target_actor` to compute the action (`a'`) to be taken from the next state.
+Next, we maximize the entropy of our actor by taking the expected information content of our policy actions. Maximum entropy is reached when our actor performs uniformly random actions. This regularization ensures that the actor model doesn't become overconfident and as a result get stuck in local minima.
 
-The critic loss is formulated as the Mean Squared Error (MSE) between the critic's predictions and the One-step TD Targets. A gradient step is taken for both critic networks in the direction that minimizes this loss across the whole batch of transitions.
-
-For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the `target_critic` (arbitrarily, we choose `target_critic_1`), and take a gradient step in the direction that maximizes the average `target_critic_1` values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
-
-Then we update our `target_actor`, `target_critic_1`, and `target_critic_2` which lag behind the actual `actor`, `critic_1`, and `critic_2`. This is implemented by taking an `exponentially weighted average` of the past parameters of the models.
-
+Finally, we reset our local agent's replay buffer and step the centralized policy's optimizer using the gradients of our combined loss function. Once the local policy sends its gradients to the centralized controller, it copies the current policy of the central controller and continues to run episodes.
 
 # Other Information
 
+- Local agents use independent replay buffers
 - Local agents use a shared adam optimizer.
 - Uses no exploration noise

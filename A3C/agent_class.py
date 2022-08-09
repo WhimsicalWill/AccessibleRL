@@ -83,7 +83,7 @@ class AgentProcess():
         elif len(values.size()) == 0:
             R = values * (1 - int(done))
 
-        # iterate backwards over batch transitions
+        # iterate backwards over batch transitions to calculate rewards-to-go
         batch_return = []
         for reward in rewards[::-1]:
             R = reward + self.gamma * R
