@@ -29,11 +29,11 @@ class Agent():
         self.memory.store_transition(state, action, reward, state_, done)
 
     def choose_action(self, state):
-        self.actor.eval()
+        self.actor.eval() # switch the NN into evaluation mode
         state = torch.tensor([state], dtype=torch.float).to(self.actor.device) # put on GPU
         mu = self.actor(state).to(self.actor.device) # gets a normal distribution centered at best action
         mu_prime = mu + torch.tensor(self.noise(), dtype=torch.float).to(self.actor.device)
-        self.actor.train()
+        self.actor.train() # switch back into training mode
 
         return mu_prime.cpu().detach().numpy()[0] # TODO: why [0]
 
@@ -70,7 +70,6 @@ class Agent():
         # Do a soft update after a learning step
         self.update_agent_parameters()
 
-    # Not sure if this hard parameter will work since it references a class field
     def update_agent_parameters(self, tau=None):
         if tau is None:
             tau = self.tau
