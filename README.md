@@ -1,11 +1,13 @@
 # Accessible RL
 
+This repo is intended as a learning resource to supplement theoretical study of reinforcement learning with actual implementation details of some of the most important RL algorithms.
+
 # Features
 
-- Pytorch implementations of 8 RL algos
+- PyTorch implementations of 8 RL algos
 - Conceptual overviews
 - Simple installation
-- Easy to run experiments
+- Easily run experiments
 - Configurable hyperparams
 
 # Code Structure
