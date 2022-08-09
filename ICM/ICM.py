@@ -8,15 +8,8 @@ class ICM(nn.Module):
         self.input_shape = input_shape
         self.n_actions = n_actions
 
-        # <--- CODE FOR IMAGE-BASED FEATURE ENCODER --->
-        # self.conv1 = nn.Conv2D(input_shape[0], 32, 3, 3, stride=2, padding=1)
-        # self.conv2 = nn.Conv2D(32, 32, 3, 3, stride=2, padding=1)
-        # self.conv3 = nn.Conv2D(32, 32, 3, 3, stride=2, padding=1)
-        # self.phi = nn.Conv2D(32, 32, 3, 3, stride=2, padding=1) # phi is our feature encoder
-        # shape of latent features is (32, 3, 3)
-
+        # encoder from states to state embeddings
         self.phi = nn.Linear(input_shape, latent_dim)
-
 
         # take in two state representations and output logits for action space
         self.inverse_model = nn.Linear(latent_dim*2, fc_size)
@@ -30,9 +23,6 @@ class ICM(nn.Module):
         self.to(device)
 
     def forward(self, states, new_states, actions):
-        # calculate representations of states and new_states with feature encoder
-        # calculate our predicted representation of the next state using state and action
-        # with inverse model, predict action probs given state and new_state
         
         phi = F.relu(self.phi(states))
         phi_new = F.relu(self.phi(new_states))
