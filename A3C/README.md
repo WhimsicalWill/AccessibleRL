@@ -21,9 +21,9 @@ This implementation uses the same hidden layer to learn representations for both
 
 # Learning Update
 
-During an episode taken by a local policy, we will call the learn() function every T timesteps or when the episode is terminated. We will use all of this sampled experience to change our model parameters, and then reset our local agent's replay buffer after the update.
+During an episode taken by a local policy, we will call the `learn()` function every `T` timesteps or when the episode is terminated. We will use all of this sampled experience to change our model parameters, and then reset our local agent's replay buffer after the update.
 
-First, we calculate the rewards-to-go by iterating backwards from the end of the episode, summing the rewards and discounting by our discount factor, gamma, as we go.
+First, we calculate the `rewards-to-go` by iterating backwards from the end of the episode, summing the rewards and discounting by our discount factor, gamma, as we go.
 
 Then, we use Generalized Advantage Estimation to calculate the advantage of any particular state. This advantage is the `value of action a in state s` - `average value in state s`. Or, formally, `Q(s,a)` - `V(s)`.
 
@@ -33,7 +33,7 @@ For an action with a positive advantage (better than average), we would like to 
 
 Additionally, the `critic loss` is calculated as the Mean Squared Error (MSE) between the critic's estimates of the Q-values and the actual rewards-to-go. We would like our critic to be accurate, so we minimize this quantity.
 
-Next, we maximize the entropy of our actor by taking the expected information content of our policy actions. Maximum entropy is reached when our actor performs uniformly random actions. This regularization ensures that the actor model doesn't become overconfident and as a result get stuck in local minima.
+We also include an entropy regularization to ensure that the the actor policy does not become too narrow and get stuck in local optima. To accomplish this, we minimize the negative of the expected information content of our policy's actions.
 
 Finally, we reset our local agent's replay buffer and step the centralized policy's optimizer using the gradients of our combined loss function. Once the local policy sends its gradients to the centralized controller, it copies the current policy of the central controller and continues to run episodes.
 
