@@ -20,19 +20,17 @@ Finally, the actor network is updated at a slower rate than the critic network. 
 
 DDPG also has a `target_actor`, `target_critic_1`, and `target_critic_2` which are frozen copies of the actual `actor` and `critic` networks that lag slowly behind them and provide a stable learning target for both networks.
 
-# Learn Function
+# Learning Update
 
 A batch of (s, a, r, s) transitions are sampled from the replay buffer uniformly.
 
-One step TD targets are computed for each transition. The target is computed as the reward added to the discounted target critic value of the next state action pair. One caveat is that this discounted target critic value is now taken from the minimum of the two critics to curb overestimation bias.
-
-Also, since we only have access to the resultant state, we use the target_actor to compute the action to be taken from the next state. We add noise to this computed action, which will have the effect of smoothing out our actor network.
+One-step TD targets are computed for each transition. The TD targets are computed as the reward added to the discounted `target_critic` value of the next state action pair. One caveat is that this discounted target critic value is now taken from the minimum of the two critics to curb overestimation bias. Since we do not have access to `a'` in our (s, a, r, s') transition, we use the `target_actor` to compute the action (`a'`) to be taken from the next state.
 
 The critic loss is formulated as the Mean Squared Error (MSE) between the critic's predictions and the One-step TD Targets. A gradient step is taken for both critic networks in the direction that minimizes this loss across the whole batch of transitions.
 
-For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the target critic (arbitrarily, we choose target_critic_1), and take a gradient step in the direction that maximizes the average critic values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
+For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the `target_critic` (arbitrarily, we choose `target_critic_1`), and take a gradient step in the direction that maximizes the average `target_critic_1` values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
 
-Then we update our `target_actor` and `target_critic` which lag behind the actual `actor` and `critic`. This is implemented by taking an `exponentially weighted average` of the past parameters of the `actor` and `critic`
+Then we update our `target_actor`, `target_critic_1`, and `target_critic_2` which lag behind the actual `actor`, `critic_1`, and `critic_2`. This is implemented by taking an `exponentially weighted average` of the past parameters of the models.
 
 
 # Other Information
