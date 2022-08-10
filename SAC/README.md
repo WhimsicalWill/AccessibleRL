@@ -22,16 +22,13 @@ A batch of (s, a, r, s') transitions are sampled from the replay buffer uniforml
 
 The three networks are updated in the learn function, but keep in mind that the order that they are updated is arbitrary and inconsequential. This implementation updates the `value` network, `actor`, and then finally the `critic`
 
-The `value` networks loss is formulated as the Mean Squared Error (MSE) between the `value` networks prediction of the state values and the `value_target` which approximates the expected value of the states plus the `entropy regularization`. A gradient step is taken in the space of the `value` networks parameters in order to minimize this MSE loss.
+The `value` network's loss is formulated as the Mean Squared Error (MSE) between the `value` network's prediction of the state values and the `value_target` which approximates the expected value of the states plus the `entropy regularization`. A gradient step is taken in the space of the `value` networks parameters in order to minimize this MSE loss.
 
 For its update, the `actor` uses the minimum value of both critics as a proxy that tells it which parts of the environment are high value. We feed our actor model's action into both `critic` networks, and maximize the minimum value of the two networks plus the actor's bonus for acting with higher uncertainty. Then we take  take a gradient step in the direction that maximizes this metric across the whole batch of transitions. 
 
-The `critic` loss is formulated as the MSE between the critic's predictions and the One-step TD Targets. This TD Target uses the `target_value` network output to construct the target. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
-
-One step TD targets are computed for each transition. The target is computed as the reward added to the discounted `target_value` network's value prediction of the next state.
+The `critic` loss is formulated as the MSE between the critic's predictions and the One-step TD Targets. These TD Targets are computed as the next-step reward added to the discounted `target_value` network's value prediction of the next state. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
 
 Then we update our `target_value` network which lags behind the actual `value` network. This is implemented by taking an `exponentially weighted average` of the past parameters of the `value` network.
-
 
 # Other Information
 
