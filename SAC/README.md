@@ -2,35 +2,40 @@
 
 # Conceptual Overview
 
-Deep Deterministic Policy Gradient (DDPG) is the continuous analog of Deep Q-Network (DQN). Instead of producing discrete actions, DDPG produces continuous-valued actions.
+Soft Actor Critic (SAC) is an `off-policy` RL algorithm that uses a `stochastic policy` and works with environments that have `continuous action spaces`. It learns two independent critic networks to curb overestimation bias, and is similar to `DDPG` and `TD3`. Much of SAC's stability comes from its stochastic nature and `entropy regularization`.
 
-The main practical issue that DDPG addresses is the problem of finding the best action in a continuous space. In the discrete setting, a critic function makes the action policy trivial. It must simply look at the critic's evaluation of each (state, action) pair, and take the action with the highest predicted value. However, the equivalent in a continuous setting is impossible.
-
-In contrast to DQN, DDPG is an Actor Critic algorithm. This implementation uses Deep NN function approximators for choosing a continuous action vector (`actor`) and for  evaluating (state, action) pairs (`critic`).
+Taken from OpenAI's Spinning Up docs: "A central feature of SAC is entropy regularization. The policy is trained to maximize a trade-off between expected return and entropy, a measure of randomness in the policy. This has a close connection to the exploration-exploitation trade-off: increasing entropy results in more exploration, which can accelerate learning later on. It can also prevent the policy from prematurely converging to a bad local optimum."
 
 # Networks
 
-- Actor is a Deep NN with one hidden layer that maps states -> actions
+- Actor is a Deep NN with one hidden layer that maps states -> normal distribution on actions
 - Critic is a Deep NN with one hidden layer that maps (state, action) -> value
+- ValueNetwork is a Deep NN with on ehidden layer mapping states -> values
 
-DDPG also has a `target_actor` and `target_critic` which are frozen copies of the actual `actor` and `target` that lag slowly behind them and provide a stable learning target for both networks.
+SAC also has a `target_value` which is a frozen copy of the actual `value` network that lags slowly behind it and provides a stable learning target.
+
+Note: not all implementations of SAC have a separate Value function, but this implementation does.
 
 # Learn Function
 
-A batch of (s, a, r, s) transitions are sampled from the replay buffer uniformly.
+A batch of (s, a, r, s') transitions are sampled from the replay buffer uniformly.
 
-One step TD targets are computed for each transition. The target is computed as the reward added to the discounted target critic value of the next state action pair. Since we only have access to the resultant state, we use the target_actor to compute the action.
+The three networks are updated in the learn function, but keep in mind that the order that they are updated is arbitrary and inconsequential. This implementation updates the `value` network, `actor`, and then finally the `critic`
 
-The critic loss is formulated as the Mean Squared Error (MSE) between the critic's predictions and the One-step TD Targets. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
+The `value` networks loss is formulated as the Mean Squared Error (MSE) between the `value` networks prediction of the state values and the `value_target` which approximates the expected value of the states plus the `entropy regularization`. A gradient step is taken in the space of the `value` networks parameters in order to minimize this MSE loss.
 
-For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the target critic, and take a gradient step in the direction that maximizes the average critic values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
+For its update, the `actor` uses the minimum value of both critics as a proxy that tells it which parts of the environment are high value. We feed our actor model's action into the target critic, and maximize the average critic values minus plus the actor's bonus for acting with higher uncertainty. Then we take  take a gradient step in the direction that maximizes this metric across the whole batch of transitions. 
 
-Then we update our `target_actor` and `target_critic` which lag behind the actual `actor` and `critic`. This is implemented by taking an `exponentially weighted average` of the past parameters of the `actor` and `critic`
+The `critic` loss is formulated as the MSE between the critic's predictions and the One-step TD Targets. This TD Target uses the `target_value` network output to construct the target. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
+
+One step TD targets are computed for each transition. The target is computed as the reward added to the discounted `target_value` network's value prediction of the next state.
+
+Then we update our `target_value` network which lags behind the actual `value` network. This is implemented by taking an `exponentially weighted average` of the past parameters of the `value` network.
 
 
 # Other Information
 
 - Uses a replay buffer
-- Uses Ornstein Uhlenbeck noise (OU Noise)
-    - This is correlated noise that is added to actions to induce exploration, and has a tendency to drift back towards zero.
-- Networks use a specific weight initialization from the DDPG paper
+- This implementation uses a Value Network
+- The stochasticity of the policy and the entropy regularization takes care of exploration.
+- Actions are sampled from a normal during training, but the mean action is taken during evaluation time.
