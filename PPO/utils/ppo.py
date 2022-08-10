@@ -181,10 +181,6 @@ class PPO:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1-self.eps, 1+self.eps) * advantages
 
-            # print(state_values.device(), surr1.device(), surr2.device())
-
-            # if i == 40:
-            #     print(torch.min(surr1, surr2).mean().item(), self.MseLoss(rewards, state_values).item(), dist_entropy)
             loss = -1 * torch.min(surr1, surr2) + 0.05 * self.MseLoss(rewards, state_values) - 0.01 * dist_entropy
             self.optimizer.zero_grad()
             loss.mean().backward()
