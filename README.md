@@ -55,8 +55,9 @@ A great way to learn about existing algorithms is to modify their code, tweak th
 - Put all utilities in a util.py folder
 - Utils.py should include replay buffer, plot curve, parallelism, render agent, etc.
 
+- UI for the repository should have all commands issued from the root of the repo. The commands will be something like `python train.py {algo_name}` and `python render.py {algo_name}`
+
 
 Convert the following to required structure:
 
 - PPO
-- PG
