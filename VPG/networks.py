@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-class ActorCritic(nn.Module):
+class ActorValue(nn.Module):
 	def __init__(self, lr, input_dims, n_actions, name, fc1_dims=256, fc2_dims=256, chkpt_dir='tmp/vpg'):
 		super(ActorCritic, self).__init__()
 		self.fc1 = nn.Linear(*input_dims, fc1_dims)

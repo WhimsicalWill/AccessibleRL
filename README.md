@@ -61,3 +61,4 @@ A great way to learn about existing algorithms is to modify their code, tweak th
 Convert the following to required structure:
 
 - PPO
+- Fix VPG (should use rewards-to-go)
