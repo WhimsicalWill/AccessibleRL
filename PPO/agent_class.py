@@ -1,3 +1,7 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.distributions import Categorical
 # import torch
 # import torch.nn.functional as F
 # import numpy as np
@@ -70,7 +74,7 @@
 # 		self.update_agent_parameters()
 
 class Agent:
-	def __init__(self, input_shape, n_actions, batch_size=64, gamma=0.99, eps=0.2, fc1_dims=256):
+	def __init__(self, alpha, beta, input_shape, n_actions, batch_size=64, gamma=0.99, eps=0.2, fc1_dims=256):
 		self.input_shape = input_shape
 		self.n_actions = n_actions
 		self.batch_size = batch_size
@@ -78,19 +82,59 @@ class Agent:
 		self.eps = eps
 		self.fc1_dims = fc1_dims
 
-		self.critic = Critic(self.state_dim, self.hidden_size).to(device)
-		self.actor = Actor(self.state_dim, self.action_dim, self.fc1_dims).to(device)
+		self.critic = Critic(beta, input_shape, fc1_dims, fc2_dims, n_actions).to(device)
+		self.actor = Actor(alpha, input_shape, fc1_dims, fc2_dims, n_actions).to(device)
 		self.memory = ReplayBuffer(max_size, input_dims, n_actions)
 
-		lr_actor = 0.0003       # learning rate for actor network
-		lr_critic = 0.001       # learning rate for critic network
+		# lr_critic = 0.001       # learning rate for critic network
+		# lr_actor = 0.0003       # learning rate for actor network
 
-		self.optimizer = torch.optim.Adam([
-						{'params': self.actor.parameters(), 'lr': lr_actor},
-						{'params': self.critic.parameters(), 'lr': lr_critic}
-					])
-		self.MseLoss = nn.MSELoss()
+	def store_transition(self, state, action, reward, state_, done):
+		self.memory.store_transition(state, action, reward, state_, done)
 
-def choose_action(self, staet):
-    pass
+	def choose_action(self, state):
+		state = torch.tensor([state], dtype=torch.float).to(self.actor.device)
+		probs = self.actor(state)
+		dist = Categorical(probs)
+		action = dist.sample()
+  
+		# TODO: return information and exec store_transition in main loop
+		# TODO: track log_prob
 
+	def learn(self):
+		rewards = []
+		discounted_reward = 0
+		for reward, done in zip(reversed(self.data.rewards), reversed(self.data.is_terminals)):
+			if done:
+				discounted_reward = 0
+			discounted_reward = reward + self.gamma * discounted_reward
+			# print("reward", reward, " disc", discounted_reward)
+			rewards.insert(0, discounted_reward)
+
+		rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
+
+		rewards = (rewards - rewards.mean()) / rewards.std()
+
+		# convert list to tensor
+		old_states = torch.squeeze(torch.stack(self.data.states, dim=0)).detach()
+		old_actions = torch.squeeze(torch.stack(self.data.actions, dim=0)).detach()
+		old_log_probs = torch.squeeze(torch.stack(self.data.log_probs, dim=0)).detach().to(device)
+
+		# evaluate a new policy at the old transitions and take a opt step using gradient of loss
+		for i in range(self.num_epochs):
+			log_probs, state_values, dist_entropy = self.evaluate(old_states, old_actions)
+
+			ratios = torch.exp(log_probs - old_log_probs)
+
+			# advantages
+			state_values = torch.squeeze(state_values).detach()
+			advantages = rewards - state_values
+
+			surr1 = ratios * advantages
+			surr2 = torch.clamp(ratios, 1-self.eps, 1+self.eps) * advantages
+
+			loss = -1 * torch.min(surr1, surr2) + 0.05 * self.MseLoss(rewards, state_values) - 0.01 * dist_entropy
+			self.optimizer.zero_grad()
+			loss.mean().backward()
+			self.optimizer.step()
+			self.data.clear()

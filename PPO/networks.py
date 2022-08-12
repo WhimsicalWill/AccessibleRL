@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class Critic(nn.Module):
-	def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
+	def __init__(self, beta, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
 		super(Actor, self).__init__()
 		self.input_dims = input_dims
 		self.fc1_dims = fc1_dims
@@ -19,7 +19,7 @@ class Critic(nn.Module):
 		self.q = nn.Linear(fc2_dims, 1)
 		self.softmax = nn.Softmax(dim=-1)
 
-		self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+		self.optimizer = optim.Adam(self.parameters(), lr=beta)
 		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 		self.to(self.device)
 
