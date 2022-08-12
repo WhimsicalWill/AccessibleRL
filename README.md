@@ -32,14 +32,22 @@ Each algorithm has an accompanying `README.md` with an explanation of the algori
 
 A great way to learn about existing algorithms is to modify their code, tweak their hyperparameters, and to break them (which is very easy to do). This repo is structured to allow for experiments to be run easily.
 
+Train an RL agent on an environment with a specific algo
+
 ```bash
-  python {algo_name}/train.py
+  python {algo_name}/main.py -e "{env_name}"
+```
+
+Render sample games from the trained agent on the environment it was trained on
+
+```bash
+  python {algo_name}/main.py -e "{env_name}" -r
 ```
 
 # Suggested Curriculum
 
-1. PG
-2. DQN
+1. PG (Coming soon)
+2. DQN (Coming soon)
 3. DDPG
 4. TD3
 5. SAC
@@ -51,14 +59,6 @@ A great way to learn about existing algorithms is to modify their code, tweak th
 
 - Write `README.md` for each algo
 - Create minimal `environment.yaml`
-- Put hyperparams in config.json
 - Put all utilities in a util.py folder
 - Utils.py should include replay buffer, plot curve, parallelism, render agent, etc.
-
-- UI for the repository should have all commands issued from the root of the repo. The commands will be something like `python train.py {algo_name}` and `python render.py {algo_name}`
-
-
-Convert the following to required structure:
-
-- PPO
 - Fix VPG (should use rewards-to-go)
