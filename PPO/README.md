@@ -26,7 +26,11 @@ Then we update our `target_actor` and `target_critic` which lag behind the actua
 
 # Other Information
 
-- Uses a replay buffer
-- Uses Ornstein Uhlenbeck noise (OU Noise)
-    - This is correlated noise that is added to actions to induce exploration, and has a tendency to drift back towards zero
-- Networks use a specific weight initialization from the DDPG paper
+- On policy method
+- Multiple iterations of gradient descent at each update
+
+# TODO
+
+- Change Actor to Value to reflect that it has state values, not state-action vals
+- Try to work in the entropy bonus
+- Document tensor shapes at intermediate steps
