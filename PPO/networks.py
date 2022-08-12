@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-class Critic(nn.Module):
+class Value(nn.Module):
 	def __init__(self, beta, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
-		super(Critic, self).__init__()
+		super(Value, self).__init__()
 		self.input_dims = input_dims
 		self.fc1_dims = fc1_dims
 		self.fc2_dims = fc2_dims

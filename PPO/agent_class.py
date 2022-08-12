@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-from networks import Critic, Actor
+from networks import Value, Actor
 from utils import ReplayBuffer
 
 class Agent:
@@ -16,7 +16,7 @@ class Agent:
 		self.eps = eps
 		self.fc1_dims = fc1_dims
 
-		self.critic = Critic(beta, input_shape, fc1_dims, fc2_dims, n_actions)
+		self.value = Value(beta, input_shape, fc1_dims, fc2_dims, n_actions)
 		self.actor = Actor(alpha, input_shape, fc1_dims, fc2_dims, n_actions)
 		self.memory = ReplayBuffer()
 
@@ -48,7 +48,7 @@ class Agent:
 		probs = self.actor(states)
 		dist = Categorical(probs)
 		action_log_probs = dist.log_prob(actions).to(self.actor.device)
-		state_values = self.critic(states).to(self.actor.device)
+		state_values = self.value(states).to(self.actor.device)
 
 		return action_log_probs, torch.squeeze(state_values), dist.entropy()
 
@@ -74,7 +74,7 @@ class Agent:
 			clipped_ratios = torch.clamp(ratios, 1-self.eps, 1+self.eps)
 
 			# calculate advantage function
-			state_values.detach_()
+			state_values = state_values.detach()
 			advantages = rewards_to_go - state_values
 
 			surr1 = ratios * advantages
@@ -86,19 +86,19 @@ class Agent:
 
 		# minimize MSE loss between state_values and rewards_to_go
 		for _ in range(value_update_iter):
-			self.critic.optimizer.zero_grad()
+			self.value.optimizer.zero_grad()
 			_, state_values, _ = self.evaluate(old_states, old_actions)
 
 			value_loss = F.mse_loss(state_values, rewards_to_go)
 			value_loss.backward()
-			self.critic.optimizer.step() 
+			self.value.optimizer.step() 
 		
 		self.memory.clear() # clear replay buffer after learning update
 
 	def save_models(self):
 		self.actor.save_checkpoint()
-		self.critic.save_checkpoint()
+		self.value.save_checkpoint()
 
 	def load_models(self):
 		self.actor.load_checkpoint()
-		self.critic.load_checkpoint()
+		self.value.load_checkpoint()
