@@ -4,18 +4,14 @@ from agent_class import Agent
 from utils import plot_learning_curve
 
 if __name__ == '__main__':
-	env_name = 'Acrobot-v1'
+	env_name = 'CartPole-v1'
 	env = gym.make(env_name)
 	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
-	n_games = 1000
+	n_games = 1500
 	steps_per_update = 4000
 	pi_update_iter = 80
 	value_update_iter = 80
- 
- 
-	filename = f'{env_name}_{n_games}_games'
-	figure_file = f'plots/{filename}.png'
 
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
@@ -40,6 +36,8 @@ if __name__ == '__main__':
 			best_score = avg_score
 			agent.save_models()
 		print(f"Episode {i}, score: {score}, avg_score: {avg_score}")
-	x = [i+1 for i in range(n_games)]
-	plot_learning_curve(x, scores, figure_file)
+
+	filename = f'{env_name}_{n_games}_games'
+	figure_file = f'plots/{filename}.png'
+	plot_learning_curve(scores, figure_file)
 

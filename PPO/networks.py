@@ -18,7 +18,7 @@ class Critic(nn.Module):
 		self.bn1 = nn.LayerNorm(fc1_dims)
 		self.bn2 = nn.LayerNorm(fc2_dims)
 
-		self.q = nn.Linear(fc2_dims, 1)
+		self.v = nn.Linear(fc2_dims, 1)
 		self.softmax = nn.Softmax(dim=-1)
 
 		self.optimizer = optim.Adam(self.parameters(), lr=beta)
@@ -32,8 +32,8 @@ class Critic(nn.Module):
 		x = self.fc2(x)
 		x = self.bn2(x)
 		x = F.relu(x)
-		action_value = self.q(x)
-		return action_value
+		state_value = self.v(x)
+		return state_value
 
 	def save_checkpoint(self):
 		print(' ... saving checkpoint ...')
