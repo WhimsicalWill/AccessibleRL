@@ -52,6 +52,11 @@ if __name__ == '__main__':
 	agent = Agent(gamma=0.99, lr=5e-6, input_dims=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
 	n_games = 5000
+	steps_per_update = 4000
+	pi_update_iter = 80
+	value_update_iter = 80
+ 
+ 
 	filename = f'CartPole_{n_games}_games'
 	figure_file = f'plots/{filename}.png'
 
@@ -65,7 +70,8 @@ if __name__ == '__main__':
 			action, log_prob = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
 			score += reward
-			agent.learn(observation, reward, observation_, log_prob, done)
+			agent.store_transition(observation, action, reward, log_prob, done)
+			agent.learn(pi_update_iter, value_update_iter)
 			observation = observation_
 		scores.append(score)
 		avg_score = np.mean(scores[-100:])
