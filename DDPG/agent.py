@@ -1,9 +1,8 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from ou_noise import OUActionNoise
-from buffer import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork
+from utils import OUActionNoise, ReplayBuffer
 
 class Agent:
     def __init__(self, alpha, beta, input_dims, tau, n_actions, gamma=0.99,

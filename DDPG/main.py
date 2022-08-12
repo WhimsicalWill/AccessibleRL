@@ -6,9 +6,9 @@ from utils import plot_learning_curve, render_games
 
 def train(env_name):
 	env = gym.make(env_name)
-	agent = Agent(alpha=0.001, beta=0.001, input_dims=env.observation_space.shape,
-					tau=0.005, env=env, batch_size=100, layer1_size=400, layer2_size=300, 
-					action_dim=env.action_space.shape[0])
+	agent = Agent(alpha=0.0001, beta=0.001, input_dims=env.observation_space.shape,
+					tau=0.001, batch_size=64, fc1_dims=400, fc2_dims=300, 
+					n_actions=env.action_space.shape[0])
 
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
@@ -37,7 +37,7 @@ def train(env_name):
 	plot_learning_curve(scores, figure_file)
 
 if __name__ == '__main__':
-	arg_env_name = 'CartPole-v1'
+	arg_env_name = 'LunarLanderContinuous-v2'
 	arg_render = False
 	arg_help = f"{sys.argv[0]} -e <env_name> | use -r to render games from saved policy"
 
