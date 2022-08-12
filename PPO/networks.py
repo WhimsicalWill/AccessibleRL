@@ -1,30 +1,83 @@
 import torch
 import torch.nn as nn
 
-class Actor(nn.Module):
-	def __init__(self, state_dim, action_dim, hidden_size):
+class Critic(nn.Module):
+	def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
 		super(Actor, self).__init__()
-		self.fc1 = nn.Linear(state_dim, hidden_size)
-		self.fc2 = nn.Linear(hidden_size, hidden_size)
-		self.fc3 = nn.Linear(hidden_size, action_dim)
+		self.input_dims = input_dims
+		self.fc1_dims = fc1_dims
+		self.fc2_dims = fc2_dims
+		self.n_actions = n_actions
+		self.chkpt_file = f"{chkpt_dir}/critic_ppo"
+
+		self.fc1 = nn.Linear(*input_dims, fc1_dims)
+		self.fc2 = nn.Linear(fc1_dims, fc2_dims)
+
+		self.bn1 = nn.LayerNorm(fc1_dims)
+		self.bn2 = nn.LayerNorm(fc2_dims)
+
+		self.q = nn.Linear(fc2_dims, 1)
 		self.softmax = nn.Softmax(dim=-1)
 
-	def forward(self, state):
-		x = self.fc1(state)
-		x = self.fc2(F.relu(x))
-		x = self.fc3(F.relu(x))
-		# softmax output to ensure sum of probabilities is one
-		return self.softmax(x)
-
-class Critic(nn.Module):
-	def __init__(self, state_dim, hidden_size):
-		super(Critic, self).__init__()
-		self.fc1 = nn.Linear(state_dim, hidden_size)
-		self.fc2 = nn.Linear(hidden_size, hidden_size)
-		self.fc3 = nn.Linear(hidden_size, 1)
+		self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+		self.to(self.device)
 
 	def forward(self, state):
 		x = self.fc1(state)
-		x = self.fc2(F.relu(x))
-		x = self.fc3(F.relu(x))
-		return x
+		x = self.bn1(x)
+		x = F.relu(x)
+		x = self.fc2(x)
+		x = self.bn2(x)
+		x = F.relu(x)
+		action_value = self.q(x)
+		return action_value
+
+	def save_checkpoint(self):
+		print(' ... saving checkpoint ...')
+		torch.save(self.state_dict(), self.chkpt_file)
+
+	def load_checkpoint(self):
+		print(' ... loading checkpoint ...')
+		self.load_state_dict(torch.load(self.chkpt_file))
+  
+class Actor(nn.Module):
+	def __init__(self, alpha, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
+		super(Actor, self).__init__()
+		self.input_dims = input_dims
+		self.fc1_dims = fc1_dims
+		self.fc2_dims = fc2_dims
+		self.n_actions = n_actions # this really should be 'action_dim' since it's not nec. discrete
+		self.name = name
+		self.chkpt_file = f"{chkpt_dir}/actor_ppo"
+
+		self.fc1 = nn.Linear(*input_dims, fc1_dims)
+		self.fc2 = nn.Linear(fc1_dims, fc2_dims)
+
+		self.bn1 = nn.LayerNorm(fc1_dims)
+		self.bn2 = nn.LayerNorm(fc2_dims)
+
+		self.pi = nn.Linear(fc2_dims, n_actions)
+		self.softmax = nn.Softmax(dim=-1)
+
+		self.optimizer = optim.Adam(self.parameters(), lr=alpha)
+		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+		self.to(self.device)
+
+	def forward(self, state):
+		x = self.fc1(state)
+		x = self.bn1(x)
+		x = F.relu(x)
+		x = self.fc2(x)
+		x = self.bn2(x)
+		x = F.relu(x)
+		probs = self.softmax(self.pi(x))
+		return probs
+
+	def save_checkpoint(self):
+		print(' ... saving checkpoint ...')
+		torch.save(self.state_dict(), self.chkpt_file)
+
+	def load_checkpoint(self):
+		print(' ... loading checkpoint ...')
+		self.load_state_dict(torch.load(self.chkpt_file))
