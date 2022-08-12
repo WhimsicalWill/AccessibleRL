@@ -2,32 +2,40 @@
 
 # Conceptual Overview
 
-Proximal Policy Optimization (PPO) builds off of Trust Region Policy Optimization (TRPO) in that it ensures that policy updates do not drastically change the policy at each step.
+Proximal Policy Optimization (PPO) ensures that policy updates do not drastically change the policy during each update, and this leads to better stability and convergence on the optimal policy. There are two mainstream implementations of PPO, one which penalizes the actor based on KL divergence, and one which clips the policy. This implementation implements the latter, also known as PPO-Clip.
+
+PPO is similar to Vanilla Policy Gradients (VPG), and we will see that its loss function takes a very similar form, except for the explicit clipping employed by PPO. In PPO, we run gradient descent for many timesteps whenever we update our `actor` and `value` networks. During this update, we use a small constant `epsilon` to control how far our new policy can stray from the old one. Once we increase or decrease a given action's log_probs past a certain extent, we will get gradients of zero and this action will no longer contribute to the gradient of the actor_loss.
+
+Like VPG, PPO is on-policy and works for continuous and discrete environments. PPO keeps track of (s, a, r, s') transitions as well as the `log_prob` of the actions taken under the current policy.
+
+In this implementation, we also include a hyperparameter `entropy_weight` to control the contribution of an entropy bonus to the loss. This is to encourage exploration and prevent premature convergence to local optima, but can be disabled by setting the hyperparameter to 0.
 
 # Networks
 
-- Actor is a Deep NN with one hidden layer that maps states -> actions
-- Critic is a Deep NN with one hidden layer that maps (state, action) -> value
-
-DDPG also has a `target_actor` and `target_critic` which are frozen copies of the actual `actor` and `critic` that lag slowly behind them and provide a stable learning target for both networks.
+- Actor is a Deep NN with one hidden layer that maps states -> action distribution
+- Value is a Deep NN with one hidden layer that maps states -> value
 
 # Learning Update
 
-A batch of (s, a, r, s') transitions are sampled from the replay buffer uniformly.
+Because PPO is an on-policy method, it clears the replay buffer after each learning update in order to strictly use experience collected under the current policy to update.
 
-One-step TD targets are computed for each transition. The TD targets are computed as the reward added to the discounted `target_critic` value of the next state action pair. Since we do not have access to `a'` in our (s, a, r, s') transition, we use the `target_actor` to compute the action (`a'`) to be taken from the next state.
+Rewards-to-go are calculated by summing the discounted rewards of the episode, and taking into account the fact that a terminal state has a reward of zero. These rewards-to-go are then normalized.
 
-The critic loss is formulated as the Mean Squared Error (MSE) between the critic's predictions and the One-step TD Targets. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
+Since we want to prevent our new policy from deviating too far from our old policy on each learning update, we ensure that the ratio of log_probs (between the old and new policy) does not exceed `1-epsilon` or `1+epsilon`. We then calculate our `actor_loss` as the `ratios` * `advantages`
 
-For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the `target_critic`, and take a gradient step in the direction that maximizes the average `target_critic` values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
+We optimize the `actor_loss` by nudging the actor parameters in the direction of the gradient. However, since our loss function includes the log_probs of the old policy, we detach them to reflect the fact that the old policy's log_probs are static throughout all the iterations of gradient descent.
 
-Then we update our `target_actor` and `target_critic` which lag behind the actual `actor` and `critic`. This is implemented by taking an `exponentially weighted average` of the past parameters of the `actor` and `critic`
+The policy is then updated using gradient descent for a large amount of iterations -- this implementation uses 80 iterations of gradient descent for both the policy update and value update.
 
+The `value_loss` is formulated as the Mean Squared Error (MSE) between the rewards-to-go and the `state_values` returned by the `value network`. We minimize this loss for 80 iterations using gradient descent.
+
+After the update, we clear the replay buffer and continue to collect more experience.
 
 # Other Information
 
 - On policy method
 - Multiple iterations of gradient descent at each update
+- Rewards-to-go are normalized
 
 # TODO
 

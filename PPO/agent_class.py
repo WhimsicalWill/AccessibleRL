@@ -6,12 +6,13 @@ from networks import Critic, Actor
 from utils import ReplayBuffer
 
 class Agent:
-	def __init__(self, alpha, beta, input_shape, n_actions, batch_size=64, gamma=0.99, 
-				eps=0.2, fc1_dims=256, fc2_dims=256):
+	def __init__(self, alpha, beta, input_shape, n_actions, batch_size=64, gamma=0.99,
+				ent_weight=0.05, eps=0.2, fc1_dims=256, fc2_dims=256):
 		self.input_shape = input_shape
 		self.n_actions = n_actions
 		self.batch_size = batch_size
-		self.gamma = 0.99
+		self.gamma = gamma
+		self.ent_weight = ent_weight
 		self.eps = eps
 		self.fc1_dims = fc1_dims
 
@@ -49,7 +50,6 @@ class Agent:
 		action_log_probs = dist.log_prob(actions).to(self.actor.device)
 		state_values = self.critic(states).to(self.actor.device)
 
-		# print(f"EVAL SHAPE: {action_log_probs.shape} | {state_values.shape}")
 		return action_log_probs, torch.squeeze(state_values), dist.entropy()
 
 	def learn(self, pi_update_iter, value_update_iter):
@@ -62,34 +62,29 @@ class Agent:
 		rewards_to_go = torch.tensor(rewards_to_go, dtype=torch.float32).to(self.actor.device)
 		rewards_to_go = (rewards_to_go - rewards_to_go.mean()) / rewards_to_go.std()
 
-		# print(f"RTG: {rewards_to_go}")
-
-		# convert lists to tensors and add a dimension to get (B, 1) shape
-		# TODO: debug tensor shapes
 		old_states = torch.tensor(self.memory.states, dtype=torch.float32).to(self.actor.device)
 		old_actions = torch.tensor(self.memory.actions, dtype=torch.float32).to(self.actor.device)
 		old_log_probs = torch.tensor(self.memory.log_probs, dtype=torch.float32).to(self.actor.device).detach()
 
-		print(f"Shapes: {old_states.shape} | {old_actions.shape} | {old_log_probs.shape}")
-
-		# evaluate a new policy at the old transitions
+		# evaluate a new policy at the old transitions and update actor params
 		for _ in range(pi_update_iter):
 			self.actor.optimizer.zero_grad()
-			log_probs, state_values, _ = self.evaluate(old_states, old_actions)
+			log_probs, state_values, entropy_bonus = self.evaluate(old_states, old_actions)
 			ratios = torch.exp(log_probs - old_log_probs)
 			clipped_ratios = torch.clamp(ratios, 1-self.eps, 1+self.eps)
 
 			# calculate advantage function
-			state_values = state_values.detach() # TODO: in place detach
+			state_values.detach_()
 			advantages = rewards_to_go - state_values
 
 			surr1 = ratios * advantages
 			surr2 = clipped_ratios * advantages
 
-			actor_loss = -torch.min(surr1, surr2).mean()
+			actor_loss = -torch.min(surr1, surr2).mean() - self.ent_weight * entropy_bonus.mean()
 			actor_loss.backward()
 			self.actor.optimizer.step()
 
+		# minimize MSE loss between state_values and rewards_to_go
 		for _ in range(value_update_iter):
 			self.critic.optimizer.zero_grad()
 			_, state_values, _ = self.evaluate(old_states, old_actions)

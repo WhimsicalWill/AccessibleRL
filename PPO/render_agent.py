@@ -4,7 +4,7 @@ import time
 from agent_class import Agent
 
 if __name__ == '__main__':
-	env = gym.make('CartPole-v1')
+	env = gym.make('Acrobot-v1')
 	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
 	n_games = 10
