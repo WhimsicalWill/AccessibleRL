@@ -54,6 +54,8 @@ class Agent:
         # Update the critic to minimize the MSE w.r.t. the target critic
         self.critic.optimizer.zero_grad()
         target_actions = self.target_actor(states_)
+
+        # TODO: delete shape manipulation redundancy
         target_q = rewards + (1.0 - done) * (self.gamma * self.target_critic(states_, target_actions).view(-1))
         target_q = target_q.view(self.batch_size, 1) # shape (B, 1)
         critic_loss = F.mse_loss(self.critic(states, actions), target_q)
