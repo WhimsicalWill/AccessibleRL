@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
 
 class Critic(nn.Module):
 	def __init__(self, beta, input_dims, fc1_dims, fc2_dims, n_actions, chkpt_dir='tmp/ppo'):
-		super(Actor, self).__init__()
+		super(Critic, self).__init__()
 		self.input_dims = input_dims
 		self.fc1_dims = fc1_dims
 		self.fc2_dims = fc2_dims
@@ -48,7 +50,6 @@ class Actor(nn.Module):
 		self.fc1_dims = fc1_dims
 		self.fc2_dims = fc2_dims
 		self.n_actions = n_actions # this really should be 'action_dim' since it's not nec. discrete
-		self.name = name
 		self.chkpt_file = f"{chkpt_dir}/actor_ppo"
 
 		self.fc1 = nn.Linear(*input_dims, fc1_dims)
