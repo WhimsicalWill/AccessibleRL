@@ -6,28 +6,22 @@ from utils import plot_learning_curve, render_games
 
 def train(env_name):
 	env = gym.make(env_name)
-	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
-					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
-	n_games = 1500
-	steps_per_update = 4000
-	pi_update_iter = 80
-	value_update_iter = 80
+	agent = Agent(alpha=0.0003, beta=0.0003, reward_scale=2, 
+					input_dims=env.observation_space.shape,
+					tau=0.005, batch_size=256, fc1_dims=256, fc2_dims=256, 
+					env=env, action_dim=env.action_space.shape[0])
 
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
-	steps = 0
 	for i in range(n_games):
 		done = False
 		observation = env.reset()
 		score = 0
 		while not done:
-			action, log_prob = agent.choose_action(observation)
+			action = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
-			agent.store_transition(observation, action, reward, log_prob, done)
+			agent.store_transition(observation, action, reward, observation_, done)
 			score += reward
-			steps += 1
-			if steps % steps_per_update == 0:
-				agent.learn(pi_update_iter, value_update_iter)
 			observation = observation_
 		scores.append(score)
 		avg_score = np.mean(scores[-100:])

@@ -30,6 +30,5 @@ if __name__ == '__main__':
 			best_score = avg_score
 			agent.save_models()
 		print(f"Episode {i}, score: {score}, avg_score: {avg_score}")
-	x = [i+1 for i in range(n_games)]
-	plot_learning_curve(x, scores, figure_file)
+	plot_learning_curve(scores, figure_file)
 

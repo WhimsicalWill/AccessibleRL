@@ -37,3 +37,7 @@ Then we update our `target_actor`, `target_critic_1`, and `target_critic_2` whic
 
 - Uses a replay buffer
 - Uses exploration noise sampled from a normal distribution
+
+## Conceptual note: DDPG chases a much much more stable target_critic network
+# While TD3 updates target networks every 2 steps with high (5x) tau
+# DDPG, in contrast, updates every ~20 steps with very low tau
