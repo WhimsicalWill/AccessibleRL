@@ -36,11 +36,24 @@ A great way to learn about existing algorithms is to modify their code, tweak th
   python {algo_name}/train.py
 ```
 
+# Suggested Curriculum
+
+1. PG
+2. DQN
+3. DDPG
+4. TD3
+5. SAC
+6. A3C
+7. ICM
+8. PPO
+
 # TODO:
 
 - Write `README.md` for each algo
 - Create minimal `environment.yaml`
 - Put hyperparams in config.json
+- Put all utilities in a util.py folder
+- Utils.py should include replay buffer, plot curve, parallelism, render agent, etc.
 
 
 Convert the following to required structure:
