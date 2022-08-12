@@ -5,7 +5,7 @@ from ou_noise import OUActionNoise
 from buffer import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork
 
-class Agent():
+class Agent:
     def __init__(self, alpha, beta, input_dims, tau, n_actions, gamma=0.99,
                     max_size=1000000, fc1_dims=400, fc2_dims=300,  batch_size=64):
         self.alpha = alpha
