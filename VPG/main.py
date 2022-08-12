@@ -7,7 +7,7 @@ if __name__ == '__main__':
 	env = gym.make('CartPole-v1')
 	agent = Agent(gamma=0.99, lr=5e-6, input_dims=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
-	n_games = 100
+	n_games = 5000
 	filename = f'CartPole_{n_games}_games'
 	figure_file = f'plots/{filename}.png'
 

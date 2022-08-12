@@ -5,14 +5,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 class ActorCritic(nn.Module):
-	def __init__(self, lr, input_dims, n_actions, name, fc1_dims=256, fc2_dims=256, chkpt_dir='tmp/pg'):
+	def __init__(self, lr, input_dims, n_actions, name, fc1_dims=256, fc2_dims=256, chkpt_dir='tmp/vpg'):
 		super(ActorCritic, self).__init__()
 		self.fc1 = nn.Linear(*input_dims, fc1_dims)
 		self.fc2 = nn.Linear(fc1_dims, fc2_dims)
 		self.pi = nn.Linear(fc2_dims, n_actions)
 		self.v = nn.Linear(fc2_dims, 1)
   
-		self.chkpt_file = f"{chkpt_dir}/pg_chkpt"
+		self.chkpt_file = f"{chkpt_dir}/vpg_chkpt"
   
 		self.optimizer = optim.Adam(self.parameters(), lr=lr)
 		self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
