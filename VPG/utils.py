@@ -12,44 +12,24 @@ def plot_learning_curve(scores, figure_file):
 	plt.plot(x, running_avg)
 	plt.title('Running average of previous 100 scores')
 	plt.savefig(figure_file)
-
-class ReplayBuffer():
-	def __init__(self, max_size, input_shape, n_actions):
-		self.mem_size = max_size
-		self.mem_ctr = 0
-		self.input_shape = input_shape
-		self.n_actions = n_actions
-		self.reset()
 	
-	def store_transition(self, state, action, reward, state_, done):
-		index = self.mem_ctr % self.mem_size # wrap around the buffer if ctr gets big enough
-		self.state_memory[index] = state
-		self.action_memory[index] = action
-		self.reward_memory[index] = reward
-		self.new_state_memory[index] = state_
-		self.terminal_memory[index] = done
+class ReplayBuffer:
+	def __init__(self):
+		self.clear()
 
-		self.mem_ctr += 1
-	
-	def reset(self):
-		self.state_memory = np.zeros((self.mem_size, *self.input_shape))
-		self.new_state_memory = np.zeros((self.mem_size, *self.input_shape))
-		self.action_memory = np.zeros((self.mem_size, self.n_actions))
-		self.reward_memory = np.zeros(self.mem_size)
-		self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool)
+	def clear(self):
+		self.states = []
+		self.actions = []
+		self.rewards = []
+		self.log_probs = []
+		self.is_terminals = []
 
-	def sample_buffer(self, batch_size): # sample n transitions from buffer
-		max_mem = min(self.mem_ctr, self.mem_size) # constrain range to current existing samples
-
-		batch = np.random.choice(max_mem, batch_size) # get indices for samples
-
-		states = self.state_memory[batch]
-		actions = self.action_memory[batch]
-		rewards = self.reward_memory[batch]
-		states_ = self.new_state_memory[batch]
-		done = self.terminal_memory[batch]
-
-		return states, actions, rewards, states_, done
+	def store_transition(self, state, action, reward, log_prob, is_terminal):
+		self.states.append(state)
+		self.actions.append(action)
+		self.rewards.append(reward)
+		self.log_probs.append(log_prob)
+		self.is_terminals.append(is_terminal)
 
 def render_games(env_name):
 	env = gym.make(env_name)

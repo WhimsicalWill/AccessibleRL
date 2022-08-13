@@ -20,6 +20,7 @@ if __name__ == '__main__':
 		while not done:
 			action, log_prob = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
+			agent.store_transition(obervation, reward, observation_, log_prob, done)
 			score += reward
 			agent.learn(observation, reward, observation_, log_prob, done)
 			observation = observation_

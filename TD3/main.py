@@ -1,6 +1,7 @@
 import gym
 import sys
 import getopt
+import numpy as np
 from agent import Agent
 from utils import plot_learning_curve, render_games
 

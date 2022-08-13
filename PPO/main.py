@@ -1,7 +1,8 @@
 import gym
 import sys
 import getopt
-from agent import Agent
+import numpy as np
+from agent_class import Agent
 from utils import plot_learning_curve, render_games
 
 def train(env_name):
