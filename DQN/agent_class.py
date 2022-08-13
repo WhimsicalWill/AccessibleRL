@@ -47,7 +47,7 @@ class Agent:
 		# Critic update using max of next-step Q-values and MSE loss
 		self.critic.optimizer.zero_grad()
 		critic_value = self.critic(states)[batch_index, actions]
-		critic_target = rewards + (1 - done) * self.gamma * torch.max(self.critic(states), dim=-1)[0]
+		critic_target = rewards + (1 - done) * self.gamma * torch.max(self.critic(states).detach(), dim=-1)[0]
 		loss = F.mse_loss(critic_value, critic_target)
 		loss.backward()
 		self.critic.optimizer.step()
