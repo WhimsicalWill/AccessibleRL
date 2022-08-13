@@ -23,7 +23,6 @@ class Agent:
 
 	def choose_action(self, state):
 		if torch.rand(1).item() < self.eps:
-			print("RANDOM ACTION")
 			action = torch.randint(low=0, high=self.n_actions, size=(1,))
 		else:
 			state = torch.tensor([state], dtype=torch.float).to(self.critic.device)
@@ -47,7 +46,7 @@ class Agent:
 		# Critic update using max of next-step Q-values and MSE loss
 		self.critic.optimizer.zero_grad()
 		critic_value = self.critic(states)[batch_index, actions]
-		critic_target = rewards + (1 - done) * self.gamma * torch.max(self.critic(states).detach(), dim=-1)[0]
+		critic_target = rewards + (1 - done) * self.gamma * torch.max(self.critic(states_).detach(), dim=-1)[0]
 		loss = F.mse_loss(critic_value, critic_target)
 		loss.backward()
 		self.critic.optimizer.step()
