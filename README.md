@@ -63,3 +63,4 @@ Render sample games from the trained agent on the environment it was trained on
 - Utils.py should include replay buffer, plot curve, parallelism, render agent, etc.
 - Fix VPG (should use rewards-to-go)
 - Fix structure of A3C and ICM (similar)
+- Setup runs to have same amount of steps, not episodes

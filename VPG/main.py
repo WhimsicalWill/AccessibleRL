@@ -9,7 +9,7 @@ def train(env_name):
 	env = gym.make(env_name)
 	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_dims=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256)
-	n_games = 1500
+	n_games = 4000
 	steps_per_update = 256
 
 	best_score = env.reward_range[0] # init to smallest possible reward

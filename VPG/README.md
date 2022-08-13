@@ -2,7 +2,7 @@
 
 # Conceptual Overview
 
-Vanilla Policy Gradients (VPG) is a classic RL algorithm that often plays an introductory role for people getting into RL. It is an on-policy method, meaning that that the policy used to collect experience is the same one that is updated. It can be used with discrete or continuous action spaces.
+Vanilla Policy Gradients (VPG) is a classic RL algorithm. It is an on-policy method, meaning that that the policy used to collect experience is the same one that is updated. It can be used with discrete or continuous action spaces.
 
 Taken from OpenAI's Spinning Up -- "The key idea underlying policy gradients is to push up the probabilities of actions that lead to higher return, and push down the probabilities of actions that lead to lower return, until you arrive at the optimal policy."
 
