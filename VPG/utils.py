@@ -2,7 +2,7 @@ import numpy as np
 import gym
 import time
 import matplotlib.pyplot as plt
-import agent
+import agent_class
 
 def plot_learning_curve(scores, figure_file):
 	x = [i+1 for i in range(len(scores))]
@@ -19,21 +19,19 @@ class ReplayBuffer:
 
 	def clear(self):
 		self.states = []
-		self.actions = []
 		self.rewards = []
 		self.log_probs = []
 		self.is_terminals = []
 
-	def store_transition(self, state, action, reward, log_prob, is_terminal):
+	def store_transition(self, state, reward, log_prob, is_terminal):
 		self.states.append(state)
-		self.actions.append(action)
 		self.rewards.append(reward)
 		self.log_probs.append(log_prob)
 		self.is_terminals.append(is_terminal)
 
 def render_games(env_name):
 	env = gym.make(env_name)
-	agent = agent.Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
+	agent = agent_class.Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
 	n_games = 10
 
