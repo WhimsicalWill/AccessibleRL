@@ -1,38 +1,29 @@
 # Deep Q-Network
 
-# Deep Deterministic Policy Gradients
-
 # Conceptual Overview
 
-Deep Deterministic Policy Gradient (DDPG) is the continuous analog of Deep Q-Network (DQN). Instead of producing discrete actions, DDPG produces continuous-valued actions.
+Deep Q-Network (DQN) approximates the value of taking different actions in each state of the environment through the use of a neural network or some other function approximator.
 
-The main practical issue that DDPG addresses is the problem of finding the best action in a continuous space. In the discrete setting, a critic function makes the action policy trivial. It must simply look at the critic's evaluation of each (state, action) pair, and take the action with the highest predicted value. However, the equivalent in a continuous setting is impossible.
+It is an off-policy method that explores the environment by sometimes taking random actions. This is known as epsilon-greedy exploration, and some implementations may use an epsilon schedule to decrease the random action probability as learning progresses.
 
-In contrast to DQN, DDPG is an Actor Critic algorithm. This implementation uses Deep NN function approximators for choosing a continuous action vector (`actor`) and for  evaluating (state, action) pairs (`critic`).
+When our agent does not take random actions to explore, it predicts the action values of each possible action in the given state and executes the action with the highest predicted value.
+
+The Q-network, which predicts the value of taking an action in a given state, is trained by nudging `Q(s,a)` towards `reward + gamma * max_a(Q(s',a))`. Since we nudge towards a target that greedily takes the best action instead of acting randomly with probability epsilon, DQN is considered off-policy.
 
 # Networks
 
-- Actor is a Deep NN with one hidden layer that maps states -> actions
-- Critic is a Deep NN with one hidden layer that maps (state, action) -> value
-
-DDPG also has a `target_actor` and `target_critic` which are frozen copies of the actual `actor` and `critic` that lag slowly behind them and provide a stable learning target for both networks.
+- Critic is a Deep NN with one hidden layer that maps (state) -> action values
 
 # Learning Update
 
 A batch of (s, a, r, s') transitions are sampled from the replay buffer uniformly.
 
-One-step TD targets are computed for each transition. The TD targets are computed as the reward added to the discounted `target_critic` value of the next state action pair. Since we do not have access to `a'` in our (s, a, r, s') transition, we use the `target_actor` to compute the action (`a'`) to be taken from the next state.
+To update our `critic network` which predicts the future discounted rewards of taking each action in a given state (the Q-values), we calculate a target using the reward received at each transition plus the discounted Q-value of the best action in the next state. If the next state was terminal, the target is just the reward.
 
-The critic loss is formulated as the Mean Squared Error (MSE) between the critic's predictions and the One-step TD Targets. A gradient step is taken in the direction that minimizes this loss across the whole batch of transitions.
+`target = reward + (1 - is_terminal) * gamma * max_a(Q(s', a))`
 
-For the actor update, we use the critic as a proxy that tells us which parts of the environment are high value. We feed our actor model's action into the `target_critic`, and take a gradient step in the direction that maximizes the average `target_critic` values across the whole batch of transitions. This is the gradient of the predicted value w.r.t. the actor model's parameters, so the gradient step only modifies the actor's parameters.
-
-Then we update our `target_actor` and `target_critic` which lag behind the actual `actor` and `critic`. This is implemented by taking an `exponentially weighted average` of the past parameters of the `actor` and `critic`
-
+Then we grab the `critic network`'s prediction of the action taken in the current state `Q(s, a)` and minimize the Mean Squared Error (MSE) betwen this prediction and the target using gradient descent. 
 
 # Other Information
 
 - Uses a replay buffer
-- Uses Ornstein Uhlenbeck noise (OU Noise)
-    - This is correlated noise that is added to actions to induce exploration, and has a tendency to drift back towards zero
-- Networks use a specific weight initialization from the DDPG paper
