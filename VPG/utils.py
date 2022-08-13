@@ -19,14 +19,14 @@ class ReplayBuffer:
 
 	def clear(self):
 		self.states = []
+		self.actions = []
 		self.rewards = []
-		self.log_probs = []
 		self.is_terminals = []
 
-	def store_transition(self, state, reward, log_prob, is_terminal):
+	def store_transition(self, state, action, reward, is_terminal):
 		self.states.append(state)
+		self.actions.append(action)
 		self.rewards.append(reward)
-		self.log_probs.append(log_prob)
 		self.is_terminals.append(is_terminal)
 
 def render_games(env_name):

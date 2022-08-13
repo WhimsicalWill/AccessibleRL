@@ -20,9 +20,9 @@ def train(env_name):
 		observation = env.reset()
 		score = 0
 		while not done:
-			action, log_prob = agent.choose_action(observation)
+			action = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
-			agent.store_transition(observation, reward, log_prob, done)
+			agent.store_transition(observation, action, reward, done)
 			score += reward
 			steps += 1
 			if steps % steps_per_update == 0:

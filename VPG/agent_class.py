@@ -14,17 +14,13 @@ class Agent():
 	def choose_action(self, state):
 		state = torch.tensor([state], dtype=torch.float32).to(self.actor.device)
 		probabilities = self.actor(state)
-
 		dist = torch.distributions.Categorical(probabilities)
 		action = dist.sample()
-		log_prob = dist.log_prob(action)
 
-		print(f"LOGPROB: {log_prob}")
+		return action.item()
 
-		return action.item(), log_prob
-
-	def store_transition(self, state, reward, log_prob, done):
-		self.memory.store_transition(state, reward, log_prob, done)
+	def store_transition(self, state, action, reward, done):
+		self.memory.store_transition(state, action, reward, done)
 
 	def calc_rewards_to_go(self, rewards, is_terminals, gamma):
 		rewards_to_go = []
@@ -38,6 +34,14 @@ class Agent():
 			rewards_to_go.append(discounted_reward)
 		return list(reversed(rewards_to_go)) # finally, reverse again to make forward-ordered
 
+	def evaluate(self, states, actions):
+		probs = self.actor(states)
+		dist = torch.distributions.Categorical(probs)
+		action_log_probs = dist.log_prob(actions).to(self.actor.device)
+		state_values = self.value(states).to(self.actor.device)
+
+		return action_log_probs, torch.squeeze(state_values)
+
 	def learn(self):
 		print("Learning update")
 
@@ -47,15 +51,11 @@ class Agent():
 		rewards_to_go = (rewards_to_go - rewards_to_go.mean()) / rewards_to_go.std()
 
 		states = torch.tensor(self.memory.states, dtype=torch.float32).to(self.actor.device)
-		log_probs = torch.tensor(self.memory.log_probs, dtype=torch.float32).to(self.actor.device)
-		print(log_probs.shape)
-
-		# TODO: normalize rewards and put on gpu (?)
+		actions = torch.tensor(self.memory.actions, dtype=torch.float32).to(self.actor.device)
 
 		# Actor network update
 		self.actor.optimizer.zero_grad()
-		state_values = self.value(states)
-		state_values = torch.squeeze(state_values)
+		log_probs, state_values = self.evaluate(states, actions)
 		advantages = rewards_to_go - state_values.detach() # detach for advantage computation
 		actor_loss = -torch.mean(log_probs*advantages)
 		actor_loss.backward()
@@ -66,6 +66,8 @@ class Agent():
 		value_loss = F.mse_loss(state_values, rewards_to_go)
 		value_loss.backward()
 		self.value.optimizer.step()
+
+		self.memory.clear()
 
 	def save_models(self):
 		self.actor.save_checkpoint()

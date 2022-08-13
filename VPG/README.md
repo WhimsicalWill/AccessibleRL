@@ -22,3 +22,7 @@ After a single transition, the agent uses the transition (s, a, r, s') and the l
 First, the One-step TD target is calculated by adding the reward to the discounted estimate of the next state's value. We update the `value network` using temporal difference learning. This update rule nudges the evaluation of the current state towards the One-step TD target, which is a more informed estimate taken one time step in the future. We accomplish this update by performing gradient descent on the Mean Squared Error (MSE) between the current state value and the One-step TD target.
 
 For the actor update, we use an `advantage function` to estimate if the action we took was better or worse than average. We formulate the advantage of a particular action as the `One-step TD target` - `current value`. If this quantity is positive, then the action was better than expected. Intuitively, actions that perform better than average should have their likelihood increased, and actions performing below average should have their likelihood decreased. To accomplish this, we maximize the quantity `log_prob` * `advantage`. Remember that the logarithm is a monotonic increasing function, so increasing the probability always increases the value of the `log_prob`.
+
+# Other Information
+
+- The Replay Buffer is reset after each learning update
