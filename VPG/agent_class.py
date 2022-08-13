@@ -4,11 +4,11 @@ from networks import Actor, Value
 from utils import ReplayBuffer
 
 class Agent():
-	def __init__(self, alpha, beta, input_dims, fc1_dims, n_actions, gamma=0.99):
+	def __init__(self, alpha, beta, input_shape, fc1_dims, n_actions, gamma=0.99):
 		self.gamma = gamma
 
-		self.actor = Actor(alpha, input_dims, n_actions, fc1_dims)
-		self.value = Value(beta, input_dims, fc1_dims)
+		self.actor = Actor(alpha, input_shape, n_actions, fc1_dims)
+		self.value = Value(beta, input_shape, fc1_dims)
 		self.memory = ReplayBuffer()
 
 	def choose_action(self, state):
@@ -43,8 +43,6 @@ class Agent():
 		return action_log_probs, torch.squeeze(state_values)
 
 	def learn(self):
-		print("Learning update")
-
 		# convert reward to a torch tensor
 		rewards_to_go = self.calc_rewards_to_go(self.memory.rewards, self.memory.is_terminals, self.gamma)
 		rewards_to_go = torch.tensor(rewards_to_go, dtype=torch.float32).to(self.actor.device)

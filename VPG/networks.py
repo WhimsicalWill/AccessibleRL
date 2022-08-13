@@ -17,10 +17,8 @@ class Actor(nn.Module):
 		self.to(self.device)
 
 	def forward(self, state): 	 
-		# print(f"Forward1: {state.shape}")
 		x = F.relu(self.fc1(state))
 		action_probs = F.softmax(self.pi(x), dim=-1)
-		# print(f"Forward2: {self.pi(x).shape}")
 		return action_probs
 
 	def save_checkpoint(self):

@@ -7,7 +7,7 @@ from utils import plot_learning_curve, render_games
 
 def train(env_name):
 	env = gym.make(env_name)
-	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_dims=env.observation_space.shape,
+	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256)
 	n_games = 4000
 	steps_per_update = 256
