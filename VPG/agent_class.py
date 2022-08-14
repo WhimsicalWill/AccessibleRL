@@ -22,9 +22,9 @@ class Agent():
 	def store_transition(self, state, action, reward, done):
 		self.memory.store_transition(state, action, reward, done)
 
-	def calc_rewards_to_go(self, rewards, is_terminals, gamma):
+	def calc_R(self, rewards, is_terminals, gamma, final_state_value):
 		rewards_to_go = []
-		discounted_reward = 0
+		discounted_reward = final_state_value
 
 		# accumulate rewards starting from the end of the buffer, working backwards
 		for reward, done in zip(reversed(rewards), reversed(is_terminals)):
@@ -42,18 +42,18 @@ class Agent():
 
 		return action_log_probs, torch.squeeze(state_values)
 
-	def learn(self):
-		# convert reward to a torch tensor
-		rewards_to_go = self.calc_rewards_to_go(self.memory.rewards, self.memory.is_terminals, self.gamma)
-		rewards_to_go = torch.tensor(rewards_to_go, dtype=torch.float32).to(self.actor.device)
-		rewards_to_go = (rewards_to_go - rewards_to_go.mean()) / rewards_to_go.std()
-
+	def learn(self, new_state, done):
 		states = torch.tensor(self.memory.states, dtype=torch.float32).to(self.actor.device)
 		actions = torch.tensor(self.memory.actions, dtype=torch.float32).to(self.actor.device)
 
+		log_probs, state_values = self.evaluate(states, actions)
+		final_state_value = 0 if done else self.value(torch.tensor([new_state], dtype=torch.float32).to(self.actor.device)).item()
+		rewards_to_go = self.calc_R(self.memory.rewards, self.memory.is_terminals, self.gamma, final_state_value)
+		rewards_to_go = torch.tensor(rewards_to_go, dtype=torch.float32).to(self.actor.device)
+		rewards_to_go = (rewards_to_go - rewards_to_go.mean()) / rewards_to_go.std()
+
 		# Actor network update
 		self.actor.optimizer.zero_grad()
-		log_probs, state_values = self.evaluate(states, actions)
 		advantages = rewards_to_go - state_values.detach() # detach for advantage computation
 		actor_loss = -torch.mean(log_probs*advantages)
 		actor_loss.backward()

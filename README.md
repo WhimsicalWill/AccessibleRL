@@ -59,8 +59,6 @@ Render sample games from the trained agent on the environment it was trained on
 
 - Write `README.md` for each algo
 - Create minimal `environment.yaml`
-- Put all utilities in a util.py folder
-- Utils.py should include replay buffer, plot curve, parallelism, render agent, etc.
-- Fix VPG (should use rewards-to-go)
 - Fix structure of A3C and ICM (similar)
 - Setup runs to have same amount of steps, not episodes
+- Fix any algos using rewards-to-go by creating a value prediction for next_obs
