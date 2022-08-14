@@ -32,9 +32,9 @@ class Agent:
   
 		return action.detach().item(), log_prob
 
-	def calc_rewards_to_go(self, rewards, is_terminals, gamma):
+	def calc_rewards_to_go(self, rewards, is_terminals, gamma, final_state_value):
 		rewards_to_go = []
-		discounted_reward = 0
+		discounted_reward = final_state_value
 
 		# accumulate rewards starting from the end of the buffer, working backwards
 		for reward, done in zip(reversed(rewards), reversed(is_terminals)):
@@ -52,11 +52,12 @@ class Agent:
 
 		return action_log_probs, torch.squeeze(state_values), dist.entropy()
 
-	def learn(self, pi_update_iter, value_update_iter):
+	def learn(self, pi_update_iter, value_update_iter, new_state, done):
 		print("Learning update")
 
 		# calculate rewards to go
-		rewards_to_go = self.calc_rewards_to_go(self.memory.rewards, self.memory.is_terminals, self.gamma)
+		final_state_value = 0 if done else self.value(torch.tensor([new_state], dtype=torch.float32).to(self.actor.device)).item()
+		rewards_to_go = self.calc_rewards_to_go(self.memory.rewards, self.memory.is_terminals, self.gamma, final_state_value)
 
 		# convert to torch tensor and normalize
 		rewards_to_go = torch.tensor(rewards_to_go, dtype=torch.float32).to(self.actor.device)

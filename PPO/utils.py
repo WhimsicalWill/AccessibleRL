@@ -2,7 +2,7 @@ import numpy as np
 import gym
 import time
 import matplotlib.pyplot as plt
-from agent_class import Agent
+import agent_class
 
 def plot_learning_curve(scores, figure_file):
 	x = [i+1 for i in range(len(scores))]

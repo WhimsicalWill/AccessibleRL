@@ -11,7 +11,7 @@ def train(env_name):
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
 
 	total_steps = 3e5
-	steps_per_update = 4000
+	steps_per_update = 400
 	pi_update_iter = 80
 	value_update_iter = 80
 
@@ -30,7 +30,7 @@ def train(env_name):
 			score += reward
 			steps += 1
 			if steps % steps_per_update == 0:
-				agent.learn(pi_update_iter, value_update_iter)
+				agent.learn(pi_update_iter, value_update_iter, observation_, done)
 			observation = observation_
 		scores.append(score)
 		avg_score = np.mean(scores[-100:])
