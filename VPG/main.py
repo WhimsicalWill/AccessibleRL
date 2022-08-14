@@ -9,17 +9,17 @@ def train(env_name):
 	env = gym.make(env_name)
 	agent = Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
 					n_actions=env.action_space.n, fc1_dims=256)
-	total_steps = 1e5 # one hundred thousand
+	
+	total_steps = 3e5
 	steps_per_update = 64
-
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
-	steps, episode = 0, 0
+	steps, episodes = 0, 0
 	while steps < total_steps:
 		done = False
 		observation = env.reset()
 		score = 0
-		episode += 1
+		episodes += 1
 		while not done:
 			action = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
@@ -35,10 +35,10 @@ def train(env_name):
 		if avg_score > best_score:
 			best_score = avg_score
 			agent.save_models()
-		print(f"Episode {episode}, score: {score}, avg_score: {avg_score}")
+		print(f"Episode {episodes}, score: {score}, avg_score: {avg_score}")
 	
 	env.close()
-	filename = f'{env_name}_{n_games}_games'
+	filename = f'{env_name}_{episodes}_games'
 	figure_file = f'plots/{filename}.png'
 	plot_learning_curve(scores, figure_file)
 

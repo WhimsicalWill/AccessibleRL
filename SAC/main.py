@@ -12,18 +12,22 @@ def train(env_name):
 					tau=0.005, batch_size=256, fc1_dims=256, fc2_dims=256, 
 					env=env, action_dim=env.action_space.shape[0])
 
+	total_steps = 3e5
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
-	for i in range(n_games):
+	steps, episodes = 0, 0
+	while steps < total_steps:
 		done = False
 		observation = env.reset()
 		score = 0
+		episodes += 1
 		while not done:
 			action = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
 			agent.store_transition(observation, action, reward, observation_, done)
 			agent.learn()
 			score += reward
+			steps += 1
 			observation = observation_
 		scores.append(score)
 		avg_score = np.mean(scores[-100:])
@@ -31,10 +35,10 @@ def train(env_name):
 		if avg_score > best_score:
 			best_score = avg_score
 			agent.save_models()
-		print(f"Episode {i}, score: {score}, avg_score: {avg_score}")
+		print(f"Episode {episodes}, score: {score}, avg_score: {avg_score}")
 	
 	env.close()
-	filename = f'{env_name}_{n_games}_games'
+	filename = f'{env_name}_{episodes}_games'
 	figure_file = f'plots/{filename}.png'
 	plot_learning_curve(scores, figure_file)
 
