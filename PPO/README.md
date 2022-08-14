@@ -19,13 +19,15 @@ In this implementation, we also include a hyperparameter `entropy_weight` to con
 
 Because PPO is an on-policy method, it clears the replay buffer after each learning update in order to strictly use experience collected under the current policy to update.
 
+All transitions from the episode, having form (s, a, r, s'), along with the log_probs corresponding to the actions, are loaded into torch tensors.
+
 Rewards-to-go are calculated by summing the discounted rewards of the episode, and taking into account the fact that a terminal state has a reward of zero. These rewards-to-go are then normalized.
 
 Since we want to prevent our new policy from deviating too far from our old policy on each learning update, we ensure that the ratio of log_probs (between the old and new policy) does not exceed `1-epsilon` or `1+epsilon`. We then calculate our `actor_loss` as the `ratios` * `advantages`
 
 We optimize the `actor_loss` by nudging the actor parameters in the direction of the gradient. However, since our loss function includes the log_probs of the old policy, we detach them to reflect the fact that the old policy's log_probs are static throughout all the iterations of gradient descent.
 
-The policy is then updated using gradient descent for a large amount of iterations -- this implementation uses 80 iterations of gradient descent for both the policy update and value update.
+The policy uses gradient descent for a large amount of iterations -- this implementation uses 80 iterations of gradient descent for both the policy update and value update.
 
 The `value_loss` is formulated as the Mean Squared Error (MSE) between the rewards-to-go and the `state_values` returned by the `value network`. We minimize this loss for 80 iterations using gradient descent.
 
