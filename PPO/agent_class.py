@@ -7,7 +7,7 @@ from utils import ReplayBuffer
 
 class Agent:
 	def __init__(self, alpha, beta, input_shape, n_actions, batch_size=64, gamma=0.99,
-				ent_weight=0.05, eps=0.2, fc1_dims=256, fc2_dims=256):
+				ent_weight=0.01, eps=0.2, fc1_dims=256, fc2_dims=256):
 		self.input_shape = input_shape
 		self.n_actions = n_actions
 		self.batch_size = batch_size

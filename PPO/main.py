@@ -11,7 +11,7 @@ def train(env_name):
 					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
 
 	total_steps = 3e5
-	steps_per_update = 400
+	steps_per_update = 4000
 	pi_update_iter = 80
 	value_update_iter = 80
 
