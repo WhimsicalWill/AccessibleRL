@@ -2,16 +2,13 @@ import gym
 import sys
 import getopt
 import numpy as np
-from agent import Agent
+from agent_class import Agent
 from utils import plot_learning_curve, render_games
 
 def train(env_name):
 	env = gym.make(env_name)
-	agent = Agent(alpha=0.0003, beta=0.0003, reward_scale=2, 
-					input_dims=env.observation_space.shape,
-					tau=0.005, batch_size=256, fc1_dims=256, fc2_dims=256, 
-					env=env, action_dim=env.action_space.shape[0])
-
+	agent = Agent(alpha=0.0003, beta=0.0003, input_dims=env.observation_space.shape,
+					tau=0.005, env=env, action_dim=env.action_space.shape[0]) 
 	total_steps = 3e5
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
@@ -43,7 +40,7 @@ def train(env_name):
 	plot_learning_curve(scores, figure_file)
 
 if __name__ == '__main__':
-	arg_env_name = 'CartPole-v1'
+	arg_env_name = 'LunarLanderContinuous-v2'
 	arg_render = False
 	arg_help = f"{sys.argv[0]} -e <env_name> | use -r to render games from saved policy"
 

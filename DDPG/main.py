@@ -34,7 +34,7 @@ def train(env_name):
 		if avg_score > best_score:
 			best_score = avg_score
 			agent.save_models()
-		print(f"Episode {episodes}, score: {score}, avg_score: {avg_score}")
+		print(f"Episode {episodes}, Steps {steps}, score: {score}, avg_score: {avg_score}")
 	
 	env.close()
 	filename = f'{env_name}_{episodes}_games'

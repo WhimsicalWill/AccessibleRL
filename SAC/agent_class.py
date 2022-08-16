@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from buffer import ReplayBuffer
+from utils import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork, ValueNetwork
 
 class Agent():

@@ -2,7 +2,7 @@ import numpy as np
 import gym
 import time
 import matplotlib.pyplot as plt
-import agent
+import agent_class
 
 def plot_learning_curve(scores, figure_file):
 	x = [i+1 for i in range(len(scores))]
@@ -53,8 +53,8 @@ class ReplayBuffer():
 
 def render_games(env_name):
 	env = gym.make(env_name)
-	agent = agent.Agent(alpha=0.0003, beta=0.001, gamma=0.99, input_shape=env.observation_space.shape,
-					n_actions=env.action_space.n, fc1_dims=256, fc2_dims=256)
+	agent = agent_class.Agent(alpha=0.0003, beta=0.0003, input_dims=env.observation_space.shape,
+					tau=0.005, env=env, action_dim=env.action_space.shape[0]) 
 	n_games = 10
 
 	# Load saved model
@@ -65,7 +65,7 @@ def render_games(env_name):
 		done = False
 		score = 0
 		while not done:
-			action, _ = agent.choose_action(observation)
+			action = agent.choose_action(observation)
 			observation_, reward, done, info = env.step(action)
 			env.render(mode="human")
 			time.sleep(0.01)
