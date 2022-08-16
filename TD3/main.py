@@ -2,7 +2,7 @@ import gym
 import sys
 import getopt
 import numpy as np
-from agent import Agent
+from agent_class import Agent
 from utils import plot_learning_curve, render_games
 
 def train(env_name):
@@ -14,7 +14,7 @@ def train(env_name):
 	total_steps = 3e5
 	best_score = env.reward_range[0] # init to smallest possible reward
 	scores = []
-	steps, episode = 0, 0
+	steps, episodes = 0, 0
 	while steps < total_steps:
 		done = False
 		observation = env.reset()
@@ -34,15 +34,15 @@ def train(env_name):
 		if avg_score > best_score:
 			best_score = avg_score
 			agent.save_models()
-		print(f"Episode {episode}, score: {score}, avg_score: {avg_score}")
+		print(f"Episode {episodes}, score: {score}, avg_score: {avg_score}")
 	
 	env.close()
-	filename = f'{env_name}_{episode}_games'
+	filename = f'{env_name}_{episodes}_games'
 	figure_file = f'plots/{filename}.png'
 	plot_learning_curve(scores, figure_file)
 
 if __name__ == '__main__':
-	arg_env_name = 'CartPole-v1'
+	arg_env_name = 'LunarLanderContinuous-v2'
 	arg_render = False
 	arg_help = f"{sys.argv[0]} -e <env_name> | use -r to render games from saved policy"
 

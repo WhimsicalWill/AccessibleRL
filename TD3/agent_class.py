@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
-from buffer import ReplayBuffer
+from utils import ReplayBuffer
 from networks import ActorNetwork, CriticNetwork
 
 class Agent():
@@ -70,7 +70,7 @@ class Agent():
         self.critic_1.optimizer.zero_grad()
         self.critic_2.optimizer.zero_grad()
         target_actions = self.target_actor(states_) # states on gpu -> target_actions on gpu after call
-        clipped_noise = torch.clip(torch.normal(0, 0.2, (1,)), -0.5, 0.5).to(self.actor.device) # put on the device
+        clipped_noise = torch.clamp(torch.normal(0, 0.2, (1,)), -0.5, 0.5).to(self.actor.device) # put on the device
         target_actions = torch.clamp(target_actions + clipped_noise, self.min_action[0], self.max_action[0]) # not clipping this may result in OOD function approx.
 
         # take minimum of both target networks estimates to curb overstimation bias
