@@ -46,8 +46,8 @@ Render sample games from the trained agent on the environment it was trained on
 
 # Suggested Curriculum
 
-1. PG (Coming soon)
-2. DQN (Coming soon)
+1. PG
+2. DQN
 3. DDPG
 4. TD3
 5. SAC
@@ -57,8 +57,4 @@ Render sample games from the trained agent on the environment it was trained on
 
 # TODO:
 
-- Write `README.md` for each algo
-- Create minimal `environment.yaml`
 - Fix structure of A3C and ICM (similar)
-- Setup runs to have same amount of steps, not episodes
-- Fix any algos using rewards-to-go by creating a value prediction for next_obs
