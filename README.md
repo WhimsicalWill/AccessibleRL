@@ -2,6 +2,8 @@
 
 This repo is intended as a learning resource to supplement theoretical study of reinforcement learning with actual implementation details of some of the most important RL algorithms.
 
+For learning more about the theory and design choices of algorithms in the Deep RL space, I would highly recommend OpenAI's [SpinningUp](https://spinningup.openai.com/en/latest/) series.
+
 # Features
 
 - PyTorch implementations of 8 RL algos
@@ -58,3 +60,4 @@ Render sample games from the trained agent on the environment it was trained on
 # TODO:
 
 - Fix structure of A3C and ICM (similar)
+- Better outline code structure in README
